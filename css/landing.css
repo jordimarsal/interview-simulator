@@ -1,0 +1,98 @@
+/* =========================================================================
+   VERBATIM — Landing */
+
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.4s, background 0.4s;
+}
+.nav__inner { display: flex; align-items: center; gap: 1.4rem; }
+.nav.scrolled { border-color: var(--line); background: rgba(7,8,10,0.6); }
+.nav__brand { display: flex; align-items: center; gap: 0.7ch; font-weight: 700; letter-spacing: -0.01em; font-size: 1.05rem; }
+.nav__brand .mark {
+  width: 1.5rem; height: 1.5rem; border-radius: 9px;
+  background: var(--grad-accent);
+  box-shadow: 0 0 24px -4px var(--accent-glow);
+  position: relative;
+}
+.nav__brand .mark::after {
+  content:""; position:absolute; inset:5px; border-radius:6px;
+  background: var(--bg-1); opacity: 0.9;
+}
+.nav__links { display: flex; align-items: center; gap: 1.6rem; }
+.nav__links a { color: var(--muted); font-size: 0.9rem; font-weight: 500; transition: color 0.3s; position: relative; }
+.nav__links a:hover { color: var(--ink); }
+.nav__cta { display: flex; align-items: center; gap: 0.8rem; }
+
+@media (max-width: 720px) { .nav__links { display: none; } }
+
+/* ------------------------------------------------------------------ */
+.hero                                                               */
+/* ------------------------------------------------------------------ */
+.hero { position: relative; padding: clamp(4rem, 12vh, 8rem) 0 clamp(3rem, 8vh, 5rem); text-align: center; }
+.hero__eyebrow {
+  display: inline-flex; align-items: center; gap: 0.6ch;
+  padding: 0.45rem 0.9rem; border-radius: 999px;
+  font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(246,195,90,0.25);
+}
+.hero__title {
+  font-size: clamp(2.6rem, 8vw, 5.6rem);
+  font-weight: 700; letter-spacing: -0.035em;
+  margin: 1.1rem 0 0.9rem;
+  background: linear-gradient(180deg, #ffffff 30%, #9aa1ac 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero__title em { font-style: normal; background: var(--grad-accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero__lede { font-size: clamp(1rem, 2.4vw, 1.3rem); color: var(--ink-dim); max-width: 44ch; margin: 0 auto 2.4rem; }
+.hero__actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* The hero orb — breathing ambient light */
+.orb-stage { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
+.orb {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+  width: min(520px, 80vw); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, rgba(246,195,90,0.22), rgba(246,195,90,0) 62%);
+  filter: blur(6px); animation: breathe 7s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.85; }
+  50%     { transform: translate(-50%,-50%) scale(1.08); opacity: 1; }
+}
+
+.hero__metrics { margin-top: 3.4rem; display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; max-width: 620px; margin-inline: auto; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.hero__metrics div { padding: 1.1rem; background: rgba(255,255,255,0.02); }
+.hero__metrics b { display: block; font-size: clamp(1.4rem,4vw,2rem); color: var(--ink); font-weight: 650; letter-spacing: -0.02em; }
+.hero__metrics span { font-size: 0.78rem; color: var(--muted); }
+
+/* ------------------------------------------------------------------ */
+Sections                                                             */
+/* ------------------------------------------------------------------ */
+section.section { padding: clamp(3.5rem, 9vh, 6.5rem) 0; }
+.section__head { max-width: 60ch; margin-bottom: 2.6rem; }
+.section__head h2 { font-size: clamp(1.6rem, 4vw, 2.6rem); letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+.section__head p { color: var(--muted); font-size: 1.02rem; }
+
+.feature-grid { display: grid; gap: 1px; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); background: var(--line); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.feature { background: var(--bg-2); padding: 1.7rem; transition: background 0.4s; }
+.feature:hover { background: var(--bg-3); }
+.feature .ic { width: 2.6rem; height: 2.6rem; border-radius: 12px; display: grid; place-items: center; margin-bottom: 1rem; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(246,195,90,0.25); }
+.feature .ic svg { width: 1.4rem; height: 1.4rem; }
+.feature h3 { font-size: 1.1rem; margin-bottom: 0.4rem; font-weight: 600; }
+.feature p { font-size: 0.92rem; color: var(--muted); }
+
+.how-steps { counter-reset: step; display: grid; gap: 0.5rem; }
+.how-step { display: grid; grid-template-columns: 3rem 1fr; gap: 1.2rem; align-items: start; padding: 1.4rem; border: 1px solid var(--line); border-radius: 16px; background: var(--bg-2); }
+.how-step::before { counter-increment: step; content: counter(step); width: 2.2rem; height: 2.2rem; border-radius: 12px; display: grid; place-items: center; font-family: var(--mono); font-size: 0.9rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(246,195,90,0.25); }
+.how-step h3 { font-size: 1rem; margin-bottom: 0.3rem; font-weight: 600; }
+.how-step p { font-size: 0.88rem; color: var(--muted); }
+
+/* ------------------------------------------------------------------ */
+Footer                                                              */
+/* ------------------------------------------------------------------ */
+footer { border-top: 1px solid var(--line); padding: 2.4rem 0; margin-top: 2rem; }
+footer .row { justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+footer .copy { color: var(--faint); font-size: 0.8rem; }
+footer nav a { color: var(--muted); font-size: 0.85rem; margin-left: 1.4rem; }
+footer nav a:hover { color: var(--ink); }

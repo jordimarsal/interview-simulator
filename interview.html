@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title data-i18n="site_title">VERBATIM · Voice Interview Simulator</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/interview.css" />
+</head>
+<body>
+  <div class="stage"></div>
+
+  <!-- Offscreen SVG icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19.5" x2="12" y2="22"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></symbol>
+      <symbol id="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+      <symbol id="i-replay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1-2 5"/><path d="M3 12V7"/><path d="M3 17v-5h5"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M9.9 5A7 7 0 0 1 12 5c6 0 9 7 9 7a13 13 0 0 1-3 4"/><path d="M6.2 6.1A13 13 0 0 0 2 12a13 13 0 0 0 3 4"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-3 3l-.1-.1a1.6 1.6 0 0 0-1.8-.3h-.2a1.6 1.6 0 0 0-1.5 1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19H5a1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5 5H7V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1.5 1H15a1.6 1.6 0 0 0 1.5-1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1.5 1h"/><path d="M14 9.5a2 2 0 1 0 0 4"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.6 5.3 5.9.9-4.3 4.2 1 5.9L12 17.6 6.8 20l1-5.9L3.5 8.7l5.9-.9z"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- TOPBAR -->
+  <header class="topbar" id="topbar">
+    <div class="container topbar__inner">
+      <a href="index.html" class="topbar__brand row">
+        <span class="mark" aria-hidden="true"></span>
+        <span data-i18n="site_title">VERBATIM</span>
+      </a>
+      <div class="status-pill" id="status-pill" data-state="idle">
+        <span class="status-dot"></span>
+        <span data-i18n="status_idle">A la espera</span>
+      </div>
+      <div class="reel" id="reel" role="progressbar" aria-label="Progreso de la entrevista" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+        <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+      </div>
+      <div class="topbar__spacer"></div>
+      <button type="button" class="icon-btn" id="settings-btn" aria-label="Configuración" title="Configuración">
+        <svg viewBox="0 0 24 24"><use href="#i-settings"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ROOM -->
+  <main class="room" id="room">
+    <div class="container">
+      <div class="room__head reveal in">
+        <h1 data-i18n="room_title">Simulador de entrevistas</h1>
+        <p data-i18n="room_lede">Habla como lo haría en una entrevista real. El agente te hace las preguntas y valora tus respuestas.</p>
+      </div>
+
+      <div class="orb-wrap">
+        <div class="orb-hub" id="orb-hub" data-mode="idle" role="img" aria-label="El entrevistador">
+          <canvas id="orb-canvas" width="300" height="300"></canvas>
+          <div class="core"></div>
+        </div>
+      </div>
+
+      <ol class="timeline" id="timeline"></ol>
+    </div>
+  </main>
+
+  <!-- VERDICT (hidden until end) -->
+  <section class="verdict hidden" id="verdict" aria-live="polite">
+    <div class="verdict__score" id="verdict-score">
+      <svg viewBox="0 0 100 100"><defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6C35A"/><stop offset="1" stop-color="#E0913A"/></linearGradient></defs><circle class="ring" cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="8"/><circle class="ring-fill" cx="50" cy="50" r="42" fill="none" stroke="url(#grad)" stroke-width="8" stroke-linecap="round"/></svg>
+      <div><span class="num" id="verdict-num">0</span></div>
+    </div>
+    <div class="verdict__grade" id="verdict-grade"></div>
+    <h2 class="verdict_title" style="text-align:center;margin-top:1rem;" data-i18n="verdict_title">Tu evaluación</h2>
+    <div class="verdict__notes" id="verdict-notes"></div>
+    <div style="text-align:center;margin-top:1.6rem;">
+      <a href="interview.html" class="btn btn--primary" data-i18n="btn_retry">Nueva entrevista</a>
+    </div>
+  </section>
+
+  <!-- BOTTOM DECK -->
+  <div class="deck" id="deck">
+    <div class="deck__inner">
+      <button type="button" class="mic-btn" id="mic-btn" aria-label="Grabar respuesta">
+        <svg viewBox="0 0 24 24"><use href="#i-mic"/></svg>
+      </button>
+      <p class="deck__prompt" id="deck-prompt" data-i18n="prompt_waiting">Pulsa el micrófono cuando estés listo para empezar.</p>
+      <div class="deck__side">
+        <button type="button" class="mini icon-btn" id="btn-replay" title="Reproducir pregunta" aria-label="Reproducir pregunta">
+          <svg viewBox="0 0 24 24"><use href="#i-replay"/></svg>
+        </button>
+        <button type="button" class="mini icon-btn" id="btn-transcript" title="Mostrar/ocultar transcripción" aria-label="Mostrar/ocultar transcripción">
+          <svg viewBox="0 0 24 24"><use href="#i-eye"/></svg>
+        </button>
+        <button type="button" class="mini icon-btn" id="btn-end" title="Terminar entrevista" aria-label="Terminar entrevista">
+          <svg viewBox="0 0 24 24"><use href="#i-stop"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="drawer" id="settings-drawer">
+    <div class="drawer__backdrop" id="drawer-backdrop"></div>
+    <aside class="drawer__panel panel" role="dialog" aria-modal="true" aria-label="Configuración">
+      <div class="drawer__head">
+        <h3 data-i18n="settings_title">Configuración</h3>
+        <button type="button" class="icon-btn" id="drawer-close" aria-label="Cerrar"><svg viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="field">
+        <label for="cfg-stt" data-i18n="s_stt_engine">Motor de transcripción (STT)</label>
+         <select id="cfg-stt">
+           <option value="whisper">Whisper (servidor local)</option>
+           <option value="browser">Voz del navegador</option>
+         </select>
+         <small data-i18n="s_whisper_hint"></small>
+         <small data-i18n="s_hint_remote">Servidores locales compatibles con OpenAI…</small>
+
+         <!-- Activación directa del servidor Whisper -->
+         <div class="whisper-launch hidden" id="whisper-launch-card">
+           <p class="wl-status" id="whisper-status-line" data-i18n="s_whisper_status_down"></p>
+           <div class="wl-code row">
+             <code id="whisper-cmd">~/ia/run-whisper.sh</code>
+             <button type="button" class="mini whisper-copy-btn" id="whisper-copy" title="Copiar comando">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+               <span class="wl-label"></span>
+             </button>
+           </div>
+           <small class="wl-hint" data-i18n="s_start_hint"></small>
+         </div>
+      </div>
+      <div class="field">
+        <label for="cfg-mic" data-i18n="s_mic_input">Micrófono de entrada</label>
+        <select id="cfg-mic"></select>
+        <small data-i18n="s_mic_hint"></small>
+      </div>
+      <div class="field">
+        <label for="cfg-tts" data-i18n="s_tts_engine">Voz del entrevistador (TTS)</label>
+        <select id="cfg-tts"></select>
+        <small data-i18n="">Elige la voz que pronuncia las preguntas.</small>
+      </div>
+      <div class="field">
+        <label for="cfg-agent" data-i18n="s_agent_engine">Agente entrevistador</label>
+        <select id="cfg-agent">
+          <option value="builtin">Interno (demo, sin clave)</option>
+          <option value="remote">Local: llama.cpp / whisper.cpp</option>
+        </select>
+
+        <!-- Estado del servidor del agente (llama.cpp) -->
+        <div class="launch-card hidden" id="agent-launch-card">
+          <p class="wl-status" id="agent-status-line" data-i18n="s_agent_status_down"></p>
+          <div class="wl-code row">
+            <code id="agent-cmd">~/ia/run-agent.sh</code>
+            <button type="button" class="mini whisper-copy-btn" id="agent-copy" title="Copiar comando">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="wl-label"></span>
+            </button>
+          </div>
+          <code class="agent-model hidden" id="agent-model-name"></code>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cfg-whisper" data-i18n="s_whisper_url">Endpoint Whisper (transcripción)</label>
+        <input type="text" id="cfg-whisper" placeholder="http://localhost:8080/v1/audio/transcriptions" />
+      </div>
+      <div class="field">
+        <label for="cfg-llm" data-i18n="s_llm_url">Agent LLM (chat completions)</label>
+        <input type="text" id="cfg-llm" placeholder="http://localhost:8080/v1/chat/completions" />
+        <input type="password" id="cfg-key" placeholder="Clave API (opcional)" style="margin-top:0.5rem;" />
+      </div>
+      <button type="button" class="btn btn--primary" id="cfg-save" data-i18n="s_save">Guardar</button>
+    </aside>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <!-- Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/orb.js"></script>
+  <script src="js/agent.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/reveal.js"></script>
+  <script src="js/whisper-ui.js"></script>
+  <script src="js/agent-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,322 @@
+/* =========================================================================
+   VERBATIM · App orchestrator / session state machine
+   IDLE -> ASKING -> RECORDING -> (THINKING) -> next turn ... -> FINISHED
+   Defensive throughout: if transcription isn't available we fall back to an
+   on-screen editor so the flow never hard-blocks.
+   ========================================================================= */
+(function () {
+  "use strict";
+
+  const $ = function (id) { return document.getElementById(id); };
+  const L = function () { return (window.I18N && window.I18N.getLocale()) || "es"; };
+  const T = function (k) { return (window.I18N_STRINGS && window.I18N_STRINGS[k] && window.I18N_STRINGS[k][L()]) || ""; };
+
+  const S = { IDLE: "idle", ASKING: "asking", RECORDING: "recording", THINKING: "thinking", FINISHED: "finished" };
+  let state = S.IDLE;
+  let history = [];
+  let currentQ = "";
+  let lastUserLi = null;
+  let activeTranscription = null;
+  let answers = [];
+
+  /* ---------------- status / prompt ---------------- */
+  const STATUS_KEYS = { idle: "status_idle", asking: "status_agent_speaking", recording: "status_listening", thinking: "status_thinking", finished: "status_done" };
+  const STATE_TO_MODE = { idle: "idle", asking: "agent", recording: "you", thinking: "thinking", finished: "done" };
+  function setStatus() {
+    const pill = $("status-pill");
+    pill.setAttribute("data-state", STATE_TO_MODE[state]);
+    pill.lastElementChild.textContent = T(STATUS_KEYS[state] || "status_idle");
+    updateReel();
+  }
+  function setPrompt(text) { $("deck-prompt").textContent = text; }
+
+  function updateReel() {
+    const reel = $("reel"); if (!reel) return;
+    const segs = reel.children;
+    for (let i = 0; i < segs.length; i++) segs[i].classList.toggle("on", i < answers.length);
+    reel.setAttribute("aria-valuenow", Math.round((answers.length / 6) * 100));
+  }
+
+  /* ---------------- orb ---------------- */
+  let orb, orbCanvas;
+  function initOrb() { orbCanvas = $("orb-canvas"); orb = new window.Orb(orbCanvas); orb.setMode("idle"); }
+
+  /* ---------------- message cards ---------------- */
+  function addAgentCard(text) {
+    const li = document.createElement("li");
+    li.className = "msg msg--agent";
+    li.innerHTML =
+      '<div class="msg__meta"><span class="who">Entrevistador</span><span class="tier-label mono"></span></div>' +
+      '<div class="msg__card">' +
+        '<div class="msg__text" data-transcript></div>' +
+        '<div class="msg__actions">' +
+          '<button type="button" class="mini" data-act="replay"><svg viewBox="0 0 24 24"><use href="#i-replay"/></svg><span class="lbl"></span></button>' +
+          '<button type="button" class="mini" data-act="transcript"><svg viewBox="0 0 24 24"><use href="#i-eye"/></svg><span class="lbl"></span></button>' +
+        '</div>' +
+      '</div>';
+    li.querySelector('[data-transcript]').textContent = text;
+    li.querySelector('[data-act="replay"]').querySelector(".lbl").textContent = T("btn_replay");
+    li.querySelector('[data-act="transcript"]').querySelector(".lbl").textContent = T("btn_show_transcript");
+    li.querySelector('[data-act="replay"]').addEventListener("click", function () { if (orb) orb.ripple(); window.Speech.tts(text); });
+    li.querySelector('[data-act="transcript"]').addEventListener("click", function () { toggleTranscript(li); });
+    $("timeline").appendChild(li); scrollDown();
+  }
+
+  function addUserCard(opts) {
+    opts = opts || {};
+    const li = document.createElement("li");
+    li.className = "msg msg--you";
+    let body;
+    if (opts.manual) {
+      body =
+        '<div class="msg__meta"><span class="who">Tú</span><span class="tier-label mono">· escribir</span></div>' +
+        '<div class="msg__card">' +
+          '<textarea class="msg__text" data-transcript placeholder="Escribe tu respuesta aquí…"></textarea>' +
+          '<div class="msg__actions"><button type="button" class="btn btn--soft" data-act="send">Enviar respuesta</button></div>' +
+        '</div>';
+    } else {
+      body =
+        '<div class="msg__meta"><span class="who">Tú</span><span class="tier-label mono">REC</span></div>' +
+        '<div class="msg__card">' +
+          '<div class="tier row"><span class="mono" style="width:3ch">0s</span><span class="bar"><i></i></span><span class="mono tier-state">grabando</span></div>' +
+          '<div class="msg__text" data-transcript></div>' +
+          '<div class="msg__actions">' +
+            '<button type="button" class="mini" data-act="rerecord"><svg viewBox="0 0 24 24"><use href="#i-replay"/></svg><span class="lbl"></span></button>' +
+            '<button type="button" class="mini" data-act="transcript"><svg viewBox="0 0 24 24"><use href="#i-eye"/></svg><span class="lbl"></span></button>' +
+          '</div>' +
+        '</div>';
+    }
+    li.innerHTML = body;
+    const textEl = li.querySelector('[data-transcript]');
+    if (opts.text) textEl.textContent = opts.text;
+
+    const trBtn = li.querySelector('[data-act="transcript"]');
+    if (trBtn) {
+      trBtn.querySelector(".lbl").textContent = T("btn_show_transcript");
+      trBtn.addEventListener("click", function () { toggleTranscript(li); });
+    }
+    if (opts.manual) {
+      li.querySelector('[data-act="send"]').addEventListener("click", function () {
+        const val = textEl.value.trim();
+        if (!val) return;
+        lastUserLi = null; // manual card is consumed
+        finalizeAnswer(val);
+      });
+    } else {
+      const recBtn = li.querySelector('[data-act="rerecord"]');
+      if (recBtn) {
+        recBtn.querySelector(".lbl").textContent = T("btn_rerecord");
+        recBtn.addEventListener("click", function () { clearLastUser(); startAnswering(); });
+      }
+    }
+    $("timeline").appendChild(li); scrollDown();
+    lastUserLi = li;
+    return { li: li, textEl: textEl };
+  }
+
+  function toggleTranscript(li) {
+    const t = li.querySelector('[data-transcript]');
+    const btn = li.querySelector('[data-act="transcript"]');
+    const hidden = t.style.display === "none";
+    t.style.display = hidden ? "" : "none";
+    if (btn) btn.querySelector(".lbl").textContent = hidden ? T("btn_show_transcript") : T("btn_hide_transcript");
+  }
+
+  function clearLastUser() { if (lastUserLi && lastUserLi.parentNode) lastUserLi.parentNode.removeChild(lastUserLi); lastUserLi = null; }
+  function scrollDown() { setTimeout(function () { $("timeline").scrollTop = $("timeline").scrollHeight; }, 30); }
+
+  /* ---------------- flow ---------------- */
+  function poseQuestion() {
+    state = S.ASKING; setStatus(); setPrompt(T("prompt_asked"));
+    if (orb) orb.setMode("agent");
+    window.Agent.nextQuestion(history).then(function (q) {
+      currentQ = q || "";
+      addAgentCard(currentQ);
+      history.push({ role: "agent", text: currentQ });
+      window.Speech.tts(currentQ);
+      if (orb) orb.ripple();
+    }).catch(function () { currentQ = T("room_lede"); addAgentCard(currentQ); });
+  }
+
+  function startAnswering() {
+    if (state === S.RECORDING) return;
+    state = S.RECORDING; setStatus(); setPrompt(T("prompt_recording"));
+    setMic(true);
+    if (orb) orb.setMode("listening");
+    if (!window.Speech.canTranscribe()) { addUserCard({ manual: true }); return; }
+    const card = addUserCard({});
+    activeTranscription = window.Speech.transcribe(L(), function (tick) {
+      const bar = liFind(card.li, ".bar > i"), st = liFind(card.li, ".tier-state");
+      if (bar) bar.style.width = Math.min(98, (tick.length / 400) * 100) + "%";
+      if (st) st.textContent = tick ? Math.max(1, Math.round(tick.length / 2)) + "s" : "grabando";
+      card.textEl.textContent = tick || "";
+    });
+    activeTranscription.start();
+  }
+  function liFind(li, sel) { return li.querySelector(sel); }
+
+  function finalizeAnswer(answerText) {
+    if (activeTranscription) {
+      activeTranscription.stop().then(function (t) { afterAnswer(t || answerText); });
+    } else { afterAnswer(answerText); }
+  }
+
+  function afterAnswer(text) {
+    text = text || "";
+    setMic(false);
+    history.push({ role: "user", text: text });
+    lastUserLi = null;
+    state = S.THINKING; setStatus(); setPrompt(T("prompt_thinking"));
+    if (orb) orb.setMode("thinking");
+    window.Agent.evaluateAnswer(currentQ, text).then(done).catch(done);
+    function done(result) {
+      answers.push({ q: currentQ, a: text, result: result });
+      updateReel();
+      advance();
+    }
+  }
+
+  function advance() { if (answers.length >= 6) finishSession(); else poseQuestion(); }
+
+  function finishSession() {
+    state = S.FINISHED; setStatus(); setPrompt(T("prompt_finished"));
+    if (orb) orb.setMode("done");
+    showVerdict();
+  }
+
+  /* ---------------- verdict ---------------- */
+  function gradeFor(score) {
+    if (score >= 90) return { es: "Sobresaliente", en: "Outstanding" };
+    if (score >= 75) return { es: "Notable", en: "Strong showing" };
+    if (score >= 60) return { es: "Bien", en: "Satisfactory" };
+    if (score >= 40) return { es: "Suficiente", en: "Developing" };
+    return { es: "En formación", en: "Needs work" };
+  }
+  function animateNumber(el, target) {
+    let cur = 0;
+    (function step() {
+      cur += Math.max(1, Math.ceil((target - cur) / 8));
+      if (cur >= target) { el.innerHTML = target + '<small>' + T("verdict_score_label") + '</small>'; return; }
+      el.textContent = cur; requestAnimationFrame(step);
+    })();
+  }
+  function showVerdict() {
+    const box = $("verdict"); notes = $("verdict-notes");
+    box.classList.remove("hidden"); $("deck").style.display = "none";
+    const scores = answers.map(function (a) { return a.result.score || 0; });
+    const avg = scores.length ? Math.round(scores.reduce(function (a, b) { return a + b; }, 0) / scores.length) : 0;
+    const strengths = [], improves = [];
+    answers.forEach(function (a) {
+      (a.result.strengths || []).forEach(function (s) { if (strengths.indexOf(s) === -1) strengths.push(s); });
+      (a.result.improvements || []).forEach(function (s) { if (improves.indexOf(s) === -1) improves.push(s); });
+    });
+    const grade = gradeFor(avg);
+    animateNumber($("verdict-num"), avg);
+    const C = 2 * Math.PI * 42;
+    const fill = document.querySelector(".ring-fill");
+    if (fill) { fill.style.strokeDasharray = C + " " + C; fill.style.strokeDashoffset = C * (1 - avg / 100); }
+    $("verdict-grade").textContent = grade[L()] || "";
+    notes.innerHTML = "";
+    pushNote(strengths.slice(0, 3), "i-star", T("note_strengths_h"));
+    pushNote(improves.slice(0, 3), "i-check", T("note_improve_h"));
+    let summaryText = "";
+    if (answers.length && answers[answers.length - 1].result.summary) {
+      const s = answers[answers.length - 1].result.summary;
+      summaryText = (typeof s === "object") ? (s[L()] || "") : s;
+    }
+    pushSummary(summaryText);
+    box.scrollIntoView({ behavior: "smooth" });
+  }
+  function pushNote(list, iconKey, label) {
+    const div = document.createElement("div"); div.className = "note";
+    div.innerHTML = '<h4><svg viewBox="0 0 24 24" style="width:1rem;height:1rem"><use href="#'+iconKey+'"/></svg>' + label + '</h4>';
+    list.forEach(function (item) { const p = document.createElement("p"); p.textContent = item; div.appendChild(p); });
+    $("verdict-notes").appendChild(div);
+  }
+  function pushSummary(text) {
+    const div = document.createElement("div"); div.className = "note";
+    div.innerHTML = '<h4>' + T("note_next_h") + '</h4><p></p>';
+    div.querySelector("p").textContent = text || "";
+    $("verdict-notes").appendChild(div);
+  }
+
+  /* ---------------- mic button visuals ---------------- */
+  function setMic(recording) {
+    const btn = $("mic-btn");
+    btn.classList.toggle("recording", recording);
+    btn.querySelector("use").setAttribute("href", recording ? "#i-stop" : "#i-mic");
+    btn.setAttribute("aria-label", recording ? T("btn_stop") : T("btn_record"));
+  }
+
+  /* ---------------- settings drawer ---------------- */
+  function loadSettingsIntoDrawer() {
+    const c = window.Config.get();
+    $("cfg-stt").value = c.stt;
+    $("cfg-agent").value = c.agent;
+    $("cfg-whisper").value = c.whisperUrl;
+    $("cfg-llm").value = c.llmUrl;
+    $("cfg-key").value = c.apiKey || "";
+    window.Config.voices(document.getElementById("cfg-tts"));
+    window.Config.mics(document.getElementById("cfg-mic"));
+  }
+
+  /* ---------------- wiring ---------------- */
+  function wire() {
+    $("mic-btn").addEventListener("click", onMicTap);
+    $("btn-replay").addEventListener("click", function () { if (currentQ) { if (orb) orb.ripple(); window.Speech.tts(currentQ); toast(T("btn_replay") + " ▶"); } });
+    $("btn-transcript").addEventListener("click", function () {
+      const cards = document.querySelectorAll(".msg--agent [data-act='transcript']");
+      if (cards.length) cards[cards.length - 1].click();
+    });
+    $("btn-end").addEventListener("click", finishSession);
+    window.Config.initDrawer($("settings-btn"), $("settings-drawer"), {
+      load: function () { loadSettingsIntoDrawer(); },
+      save: function () {
+        const vsel = $("cfg-tts");
+        const msel = $("cfg-mic");
+        const patch = {
+          stt: $("cfg-stt").value,
+          agent: $("cfg-agent").value,
+          whisperUrl: $("cfg-whisper").value.trim(),
+          llmUrl: $("cfg-llm").value.trim(),
+          apiKey: $("cfg-key").value.trim(),
+          micId: (msel && msel.value) ? msel.value : "",
+          tts: (vsel && vsel.value) ? vsel.value : ""
+        };
+        window.Config.set(patch);
+        toast(window.Config.i18n("s_saved"));
+      }
+    });
+    /* Opening settings refreshes the mic list and (one-shot) unlocks the
+       real device labels via a permission grant. */
+    $("settings-btn").addEventListener("click", function () {
+      window.Config.mics(document.getElementById("cfg-mic"), true);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.code !== "Space" || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+      e.preventDefault(); onMicTap();
+    });
+  }
+  function onMicTap() {
+    if (state === S.IDLE) poseQuestion();
+    else if (state === S.ASKING) startAnswering();
+    else if (state === S.RECORDING) finalizeAnswer(null);
+  }
+
+  /* ---------------- toast ---------------- */
+  function toast(msg) {
+    const c = $("toasts"); const t = document.createElement("div");
+    t.className = "toast"; t.textContent = msg; c.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2600);
+  }
+
+  /* ---------------- init ---------------- */
+  let notes;
+  function init() {
+    if (window.Agent) window.Agent.startSession();
+    initOrb(); wire(); setStatus(); setPrompt(T("prompt_waiting"));
+    loadSettingsIntoDrawer();
+  }
+  if (document.readyState === "complete" || document.readyState === "interactive") init();
+  else window.addEventListener("DOMContentLoaded", init);
+})();
