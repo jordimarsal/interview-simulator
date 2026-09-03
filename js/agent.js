@@ -26,8 +26,8 @@
   };
 
   const COACH_SYSTEM = {
-    es: "Eres el coach del candidato durante una entrevista técnica. Escribe SIEMPRE EN CASTELLANO, aunque el perfil esté en otro idioma. Devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"cv\": \"...\", \"general\": \"...\"}. \"cv\": una respuesta posible a la pregunta basada ESTRICTAMENTE en el PERFIL DEL CANDIDATO que te doy — usa solo experiencia, logros y tecnologías que aparezcan ahí; nada inventado. \"general\": una respuesta modelo alternativa, sólida pero sin datos personales. Cada respuesta en 2-4 frases, primera persona, tono natural de entrevista.",
-    en: "You are the candidate's coach during a technical interview. ALWAYS WRITE IN ENGLISH, even if the profile is in another language. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"cv\": \"...\", \"general\": \"...\"}. \"cv\": one possible answer to the question based STRICTLY on the CANDIDATE PROFILE provided — use only experience, achievements and technologies present there; nothing invented. \"general\": an alternative model answer, strong but without personal data. Each answer 2-4 sentences, first person, natural interview tone."
+    es: "Eres el coach del candidato durante una entrevista técnica. Escribe SIEMPRE EN CASTELLANO, aunque el perfil esté en otro idioma. Devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"cv\": \"...\", \"general\": \"...\"}. REGLAS DE FOCO — responde EXACTAMENTE a lo que pregunta; elige solo los 1-2 datos del PERFIL DEL CANDIDATO más relevantes para ESA pregunta y descarta el resto (nada de listar todo el CV); si el perfil no tiene datos relevantes, responde de forma general dentro de su experiencia real. PROHIBIDO inventar cifras o resultados: si el perfil no da métricas, describe el impacto cualitativamente. El carácter % está PROHIBIDO en ambas respuestas. Estructura: breve contexto → acción concreta → resultado/impacto. Máximo 3-4 frases (~60-90 palabras), primera persona, tono natural.",
+    en: "You are the candidate's coach during a technical interview. ALWAYS WRITE IN ENGLISH, even if the profile is in another language. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"cv\": \"...\", \"general\": \"...\"}. FOCUS RULES — answer EXACTLY what is asked; pick only the 1-2 facts from the CANDIDATE PROFILE most relevant to THAT question and drop the rest (never dump the whole CV); if the profile lacks relevant facts, answer generally within their real experience. NEVER invent numbers or results: if the profile gives no metrics, describe impact qualitatively. The % character is FORBIDDEN in both answers. Structure: brief context → concrete action → result/impact. Max 3-4 sentences (~60-90 words), first person, natural tone."
   };
 
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
@@ -210,9 +210,17 @@
       let parsed = null;
       try { const m = raw.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); } catch (e) {}
       if (!parsed || !parsed.cv || !parsed.general) throw new Error("bad coach JSON");
-      return { cv: String(parsed.cv).trim(), general: String(parsed.general).trim() };
+      // mechanical guard: models anchor on "reduced X by 40%" — drop any
+      // sentence with a percentage (the CV corpus contains no metrics)
+      return { cv: stripPercentSentences(String(parsed.cv).trim()), general: stripPercentSentences(String(parsed.general).trim()) };
     }
   };
+
+  function stripPercentSentences(text) {
+    if (!/\d\s*%/.test(text)) return text;
+    const kept = text.split(/(?<=[.!?])\s+/).filter(function (s) { return !/\d\s*%/.test(s); });
+    return (kept.join(" ") || text).trim();
+  }
 
   /* Switch mode + rebuild path when a new session starts. */
   Agent.startSession = function () {
