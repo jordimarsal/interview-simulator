@@ -363,6 +363,29 @@
       }).catch(function () { btn.disabled = false; toast(T("err_no_mic")); });
     });
     $("cfg-tts-engine").addEventListener("change", syncTtsEngineUi);
+
+    /* Topics selector: rebuild the list, wire changes, sync the agent. */
+    const list = $("topics-list");
+    if (list) {
+      const labels = (window.I18N && window.I18N.getLocale()) === "en" ? "en" : "es";
+      list.innerHTML = "";
+      window.Questions.TOPICS.forEach(function (t) {
+        const label = document.createElement("label");
+        label.className = "topic";
+        const box = document.createElement("input");
+        box.type = "checkbox"; box.value = t.id; box.checked = true;
+        const span = document.createElement("span");
+        span.textContent = t[labels];
+        label.appendChild(box); label.appendChild(span);
+        list.appendChild(label);
+      });
+      const sync = function () {
+        const on = Array.prototype.map.call(list.querySelectorAll("input:checked"), function (b) { return b.value; });
+        window.Questions.setTopics(on);
+      };
+      list.addEventListener("change", sync);
+      sync();
+    }
     document.addEventListener("keydown", function (e) {
       if (e.code !== "Space" || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
       e.preventDefault(); onMicTap();

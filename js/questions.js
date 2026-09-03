@@ -78,8 +78,68 @@
 
     { id: "concurrency", cat: ["java", "debugging"],
       es: "Cuéntame una ocasión en la que resolviste un problema de concurrencia o un incidente en producción.",
-      en: "Tell me about a time you resolved a concurrency issue or a production incident." }
+      en: "Tell me about a time you resolved a concurrency issue or a production incident." },
+
+    { id: "strengths", cat: ["warmup", "behavioral"],
+      es: "¿Cuáles son tus puntos fuertes y en qué te gustaría seguir mejorando?",
+      en: "What are your strengths, and what would you like to keep improving?" },
+
+    { id: "whyhire", cat: ["warmup", "career"],
+      es: "¿Por qué deberíamos contratarte para este puesto?",
+      en: "Why should we hire you for this role?" },
+
+    { id: "nosql", cat: ["database", "architecture"],
+      es: "¿Cuándo elegirías una base de datos NoSQL en lugar de una SQL relacional?",
+      en: "When would you choose a NoSQL database over a relational SQL one?" },
+
+    { id: "k8sflow", cat: ["devops", "cicd"],
+      es: "Cuéntame tu flujo habitual para desplegar un servicio en Kubernetes.",
+      en: "Walk me through your usual flow to deploy a service on Kubernetes." },
+
+    { id: "pyexp", cat: ["python", "backend"],
+      es: "Cuéntame tu experiencia con FastAPI: ¿cómo estructuras un servicio async en Python?",
+      en: "Tell me about your FastAPI experience: how do you structure an async service in Python?" },
+
+    { id: "clitools", cat: ["python", "automation"],
+      es: "Mantienes una suite de más de 12 herramientas CLI en Python: ¿cómo las diseñas, empaquetas y mantienes?",
+      en: "You maintain a suite of 12+ Python CLI tools: how do you design, package and maintain them?" },
+
+    { id: "pyquality", cat: ["python", "quality"],
+      es: "¿Cómo garantizas la calidad en un proyecto Python? Cuéntame sobre pytest, mypy, ruff y pre-commit.",
+      en: "How do you guarantee quality in a Python project? Tell me about pytest, mypy, ruff and pre-commit." },
+
+    { id: "automation", cat: ["python", "automation", "devops"],
+      es: "Cuéntame un flujo que hayas automatizado —por ejemplo con tus CLIs o generadores OpenAPI— y el impacto que tuvo.",
+      en: "Tell me about a flow you automated — e.g. with your CLIs or OpenAPI generators — and the impact it had." }
   ];
+
+  /* User-facing topics (left selector). Every question maps to exactly one. */
+  const TOPICS = [
+    { id: "personal",   es: "Sobre ti",               en: "About you" },
+    { id: "behavioral", es: "Comportamiento",         en: "Behavioral" },
+    { id: "backend",    es: "Backend & Java",         en: "Backend & Java" },
+    { id: "python",     es: "Python & Automatización", en: "Python & Automation" },
+    { id: "databases",  es: "Bases de datos",         en: "Databases" },
+    { id: "devops",     es: "DevOps & Cloud",         en: "DevOps & Cloud" }
+  ];
+  const TOPIC_OF = {
+    intro: "personal", selfnode: "personal", datamaster: "personal", years: "personal",
+    future: "personal", learning: "personal", strengths: "personal", whyhire: "personal",
+    pushback: "behavioral", debt: "behavioral", concurrency: "behavioral",
+    restapi: "backend", exceptions: "backend", component: "backend", leak: "backend", modernize: "backend",
+    pyexp: "python", clitools: "python", pyquality: "python", automation: "python",
+    sqlslow: "databases", cap: "databases", nosql: "databases",
+    dockercat: "devops", messaging: "devops", k8sflow: "devops"
+  };
+
+  let activeTopics = null; // null => all topics
+  function setTopics(ids) { activeTopics = (ids && ids.length) ? ids : null; }
+  function getTopics() { return activeTopics ? activeTopics.slice() : TOPICS.map(function (t) { return t.id; }); }
+  function topicLabels(lang) {
+    return TOPICS.filter(function (t) { return !activeTopics || activeTopics.indexOf(t.id) >= 0; })
+      .map(function (t) { return lang === "en" ? t.en : t.es; });
+  }
+  function inScope(q) { return !activeTopics || activeTopics.indexOf(TOPIC_OF[q.id]) >= 0; }
 
   const CLOSING = [
     { es: "Ahora eres tú quien pregunta: ¿tienes alguna pregunta sobre el equipo o la arquitectura?",
@@ -89,13 +149,15 @@
   ];
 
   function all() { return BANK.slice(); }
-  function warmup() { return BANK.filter(function (q) { return q.cat.indexOf("warmup") >= 0; }); }
+  function warmup() { return BANK.filter(function (q) { return q.cat.indexOf("warmup") >= 0 && inScope(q); }); }
   function pick(excludeSet) {
     let pool = BANK.filter(function (q) {
+      if (!inScope(q)) return false;
       if (!excludeSet.has(q.id)) return true;
       return false;
     });
-    if (!pool.length) pool = BANK.slice();
+    if (!pool.length) pool = BANK.filter(inScope);         // exhausted → repeat within topics
+    if (!pool.length) pool = BANK.slice();                 // degenerate: never block the session
     // deterministic-ish shuffle seeded by time so paths vary but stay stable per load
     const seed = Math.floor(Date.now() / 60000);
     pool.sort(function () { return 0.5 - ((seed * 9301 + 49297) % 233280) / 233280; });
@@ -103,5 +165,7 @@
   }
   function closing() { return CLOSING.slice(); }
 
-  window.Questions = { all: all, warmup: warmup, pick: pick, closing: closing };
+  window.Questions = { all: all, warmup: warmup, pick: pick, closing: closing,
+                       setTopics: setTopics, getTopics: getTopics, topicLabels: topicLabels,
+                       TOPICS: TOPICS };
 })();

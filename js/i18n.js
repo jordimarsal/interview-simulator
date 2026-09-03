@@ -284,6 +284,11 @@
       es: "El coach no pudo generar respuestas en este turno. Sigue con la entrevista.",
       en: "The coach couldn't generate answers this turn. Carry on with the interview."
     },
+    topics_title: { es: "Temas", en: "Topics" },
+    topics_hint: {
+      es: "El entrevistador preguntará solo por los temas marcados. Con todo activo, la entrevista alterna lo personal, lo no técnico y lo técnico.",
+      en: "The interviewer will only ask about the checked topics. With everything on, the interview mixes personal, non-technical and technical."
+    },
     s_tts_test: { es: "Probar voz", en: "Test voice" },
     tts_test_phrase: {
       es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",

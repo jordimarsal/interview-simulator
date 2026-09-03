@@ -99,9 +99,11 @@
     const conv = history.slice(-6).map(function (h) {
       return { role: h.role === "agent" ? "assistant" : "user", content: h.text };
     });
-    const prompt = sys + "\n\nConversación previa:\n" + conv.map(function (c) {
-      return (c.role === "assistant" ? "Entrevistador: " : "Candidato: ") + c.content;
-    }).join("\n") || "(sin preguntas previas)";
+    const prompt = sys + "\n\nTEMAS PERMITIDOS (alterna entre temas técnicos y no técnicos, sin repetirlos): " +
+      (window.Questions.topicLabels(lang).join(", ") || "libre") +
+      "\n\nConversación previa:\n" + conv.map(function (c) {
+        return (c.role === "assistant" ? "Entrevistador: " : "Candidato: ") + c.content;
+      }).join("\n") || "(sin preguntas previas)";
     const out = await chat({ messages: [{ role: "system", content: sys }, { role: "user", content: prompt }], max_tokens: 120, temperature: 0.9 });
     const clean = strip(out);
     if (!clean) throw new Error("empty question from LLM"); // poseQuestion shows its fallback copy
@@ -189,11 +191,19 @@
        STRICTLY in the candidate's CV, one generic model answer. */
     suggestAnswers: async function (question, lang) {
       if (this.mode !== "remote") return null;
+      const en = lang === "en";
       const sys = COACH_SYSTEM[lang] || COACH_SYSTEM.es;
+      // labels + reminders in the OUTPUT language: the Spanish CV otherwise
+      // drags the answer language (it dominates the prompt by volume)
+      const labels = en
+        ? { q: "QUESTION", profile: "CANDIDATE PROFILE (facts only — the profile's language is NOT the answer language)", remind: "Remember: write BOTH answers in ENGLISH." }
+        : { q: "PREGUNTA", profile: "PERFIL DEL CANDIDATO (solo datos; el idioma del perfil NO es el idioma de la respuesta)", remind: "Recuerda: escribe las dos respuestas EN CASTELLANO." };
+      const corpus = window.VERBATIM_CV || {};
+      const cvText = typeof corpus === "string" ? corpus : (corpus[lang] || corpus.es || "(no disponible)");
       const raw = await chat({
         messages: [
           { role: "system", content: sys },
-          { role: "user", content: "PREGUNTA: " + question + "\n\nPERFIL DEL CANDIDATO (CV):\n" + (window.VERBATIM_CV || "(no disponible)") }
+          { role: "user", content: labels.q + ": " + question + "\n\n" + labels.profile + ":\n" + cvText + "\n\n" + labels.remind }
         ],
         response_format: { type: "json_object" }, max_tokens: 500, temperature: 0.7
       });

@@ -56,6 +56,16 @@
         <p data-i18n="room_lede">Habla como lo haría en una entrevista real. El agente te hace las preguntas y valora tus respuestas.</p>
       </div>
 
+      <!-- TOPICS: selector de temes (esquerra en pantalla ampla) -->
+      <aside class="topics" id="topics" aria-label="Temas de la entrevista">
+        <div class="coach__head">
+          <span class="coach__dot topics__dot" aria-hidden="true"></span>
+          <span class="coach__title" data-i18n="topics_title">Temas</span>
+        </div>
+        <div class="topics__list" id="topics-list"></div>
+        <small class="topics__hint" data-i18n="topics_hint"></small>
+      </aside>
+
       <div class="orb-wrap">
         <div class="orb-hub" id="orb-hub" data-mode="idle" role="img" aria-label="El entrevistador">
           <canvas id="orb-canvas" width="300" height="300"></canvas>

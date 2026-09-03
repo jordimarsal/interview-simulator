@@ -183,3 +183,17 @@ Layout of the room                                                    */
   .room .container { padding-right: 372px; }
   .coach { position: fixed; top: 92px; right: max(24px, calc((100vw - 1200px)/2 + 24px)); width: 336px; max-height: calc(100vh - 220px); overflow-y: auto; margin: 0; z-index: 5; }
 }
+
+/* Topics selector: left column on wide screens */
+.topics { margin: 1.6rem 0 0; padding: 1rem 1.1rem; border-radius: 16px; background: rgba(255,255,255,0.035); border: 1px solid var(--line-strong); }
+.topics__dot { background: var(--ink-dim); box-shadow: 0 0 10px var(--ink-dim); }
+.topics__list { display: flex; flex-direction: column; gap: 0.45rem; }
+.topic { display: flex; align-items: center; gap: 0.55rem; font-size: 0.9rem; color: var(--ink-dim); cursor: pointer; padding: 0.15rem 0.2rem; border-radius: 8px; transition: background 0.2s; }
+.topic:hover { background: rgba(255,255,255,0.05); }
+.topic input { accent-color: var(--accent); width: 0.95rem; height: 0.95rem; flex: none; cursor: pointer; }
+.topic input:checked + span { color: var(--ink); }
+.topics__hint { display: block; margin-top: 0.7rem; color: var(--faint); font-size: 0.74rem; }
+@media (min-width: 1100px) {
+  .room .container { padding-left: 312px; padding-right: 372px; }
+  .topics { position: fixed; top: 92px; left: max(24px, calc((100vw - 1200px)/2 + 24px)); width: 264px; margin: 0; z-index: 5; }
+}
