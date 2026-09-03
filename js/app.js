@@ -151,7 +151,7 @@
     }
     body.innerHTML = '<p class="coach__note coach__loading"></p>';
     body.firstChild.textContent = T("coach_thinking");
-    window.Agent.suggestAnswers(question, L()).then(function (s) {
+    window.Agent.suggestAnswers(question, L(), history).then(function (s) {
       body.innerHTML = "";
       [["coach_cv", s.cv], ["coach_general", s.general]].forEach(function (pair) {
         const card = document.createElement("div");

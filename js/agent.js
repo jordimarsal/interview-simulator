@@ -26,8 +26,8 @@
   };
 
   const COACH_SYSTEM = {
-    es: "Eres el coach del candidato durante una entrevista técnica. Escribe SIEMPRE EN CASTELLANO, aunque el perfil esté en otro idioma. Devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"cv\": \"...\", \"general\": \"...\"}. REGLAS DE FOCO — responde EXACTAMENTE a lo que pregunta; elige solo los 1-2 datos del PERFIL DEL CANDIDATO más relevantes para ESA pregunta y descarta el resto (nada de listar todo el CV); si el perfil no tiene datos relevantes, responde de forma general dentro de su experiencia real. PROHIBIDO inventar cifras o resultados: si el perfil no da métricas, describe el impacto cualitativamente. El carácter % está PROHIBIDO en ambas respuestas. Estructura: breve contexto → acción concreta → resultado/impacto. Máximo 3-4 frases (~60-90 palabras), primera persona, tono natural.",
-    en: "You are the candidate's coach during a technical interview. ALWAYS WRITE IN ENGLISH, even if the profile is in another language. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"cv\": \"...\", \"general\": \"...\"}. FOCUS RULES — answer EXACTLY what is asked; pick only the 1-2 facts from the CANDIDATE PROFILE most relevant to THAT question and drop the rest (never dump the whole CV); if the profile lacks relevant facts, answer generally within their real experience. NEVER invent numbers or results: if the profile gives no metrics, describe impact qualitatively. The % character is FORBIDDEN in both answers. Structure: brief context → concrete action → result/impact. Max 3-4 sentences (~60-90 words), first person, natural tone."
+    es: "Eres el coach del candidato durante una entrevista técnica. Escribe SIEMPRE EN CASTELLANO, aunque el perfil esté en otro idioma. Devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"facts\": [\"...\"], \"cv\": \"...\", \"general\": \"...\"}. PASO 1 — \"facts\": los 1-2 datos del PERFIL DEL CANDIDATO estrictamente relevantes para la pregunta (array de 1-2 frases cortas, tomadas del perfil; nada más). PASO 2 — \"cv\": responde EXACTAMENTE la pregunta desarrollando SOLO esos facts (prohibido añadir otros datos del perfil); si el perfil no tiene datos relevantes, responde de forma general dentro de su experiencia real. MAL (demasiado amplio): mezclar generador OpenAPI + herramientas CLI + programación reactiva en una misma respuesta. BIEN: una sola decisión o sistema, cómo lo hiciste y su impacto. PROHIBIDO inventar cifras o resultados: sin métricas, impacto cualitativo; el carácter % está PROHIBIDO. Máximo 3-4 frases (~60-90 palabras), primera persona, tono natural. \"general\": respuesta modelo alternativa a la pregunta, sólida y sin datos personales, mismas reglas de foco y longitud.",
+    en: "You are the candidate's coach during a technical interview. ALWAYS WRITE IN ENGLISH, even if the profile is in another language. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"facts\": [\"...\"], \"cv\": \"...\", \"general\": \"...\"}. STEP 1 — \"facts\": the 1-2 facts from the CANDIDATE PROFILE strictly relevant to the question (array of 1-2 short phrases taken from the profile; nothing else). STEP 2 — \"cv\": answer EXACTLY the question developing ONLY those facts (adding other profile data is forbidden); if the profile lacks relevant facts, answer generally within their real experience. WRONG (too broad): mixing the OpenAPI generator + CLI tools + reactive programming in one answer. RIGHT: one single decision or system, how you did it, and its impact. NEVER invent numbers or results: no metrics, qualitative impact only; the % character is FORBIDDEN. Max 3-4 sentences (~60-90 words), first person, natural tone. \"general\": an alternative model answer to the question, strong and personal-data-free, same focus and length rules."
   };
 
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
@@ -189,23 +189,28 @@
 
     /* Coach: two candidate answers for the current question — one grounded
        STRICTLY in the candidate's CV, one generic model answer. */
-    suggestAnswers: async function (question, lang) {
+    suggestAnswers: async function (question, lang, history) {
       if (this.mode !== "remote") return null;
       const en = lang === "en";
       const sys = COACH_SYSTEM[lang] || COACH_SYSTEM.es;
       // labels + reminders in the OUTPUT language: the Spanish CV otherwise
       // drags the answer language (it dominates the prompt by volume)
       const labels = en
-        ? { q: "QUESTION", profile: "CANDIDATE PROFILE (facts only — the profile's language is NOT the answer language)", remind: "Remember: write BOTH answers in ENGLISH." }
-        : { q: "PREGUNTA", profile: "PERFIL DEL CANDIDATO (solo datos; el idioma del perfil NO es el idioma de la respuesta)", remind: "Recuerda: escribe las dos respuestas EN CASTELLANO." };
+        ? { q: "QUESTION", profile: "CANDIDATE PROFILE (facts only — the profile's language is NOT the answer language)", ctx: "PREVIOUS Q&A (context for references like \"those challenges\")", remind: "Remember: write BOTH answers in ENGLISH." }
+        : { q: "PREGUNTA", profile: "PERFIL DEL CANDIDATO (solo datos; el idioma del perfil NO es el idioma de la respuesta)", ctx: "CONVERSACIÓN PREVIA (contexto para referencias como «aquellos retos»)", remind: "Recuerda: escribe las dos respuestas EN CASTELLANO." };
       const corpus = window.VERBATIM_CV || {};
       const cvText = typeof corpus === "string" ? corpus : (corpus[lang] || corpus.es || "(no disponible)");
+      const conv = (history || []).slice(-4).map(function (h) {
+        return (h.role === "agent" ? "P: " : "R: ") + h.text;
+      }).join("\n");
       const raw = await chat({
         messages: [
           { role: "system", content: sys },
-          { role: "user", content: labels.q + ": " + question + "\n\n" + labels.profile + ":\n" + cvText + "\n\n" + labels.remind }
+          { role: "user", content: labels.q + ": " + question +
+            (conv ? "\n\n" + labels.ctx + ":\n" + conv : "") +
+            "\n\n" + labels.profile + ":\n" + cvText + "\n\n" + labels.remind }
         ],
-        response_format: { type: "json_object" }, max_tokens: 500, temperature: 0.7
+        response_format: { type: "json_object" }, max_tokens: 500, temperature: 0.5
       });
       let parsed = null;
       try { const m = raw.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); } catch (e) {}
