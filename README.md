@@ -4,8 +4,8 @@ Simulador de entrevistas por voz en **castellano** e **inglés**. Un entrevistad
 
 ## Qué es y cómo funciona
 
-- **El preguntador**: un agente decide qué preguntar. En modo *demo* usa un motor interno; en modo *local* lo interpreta tu propio modelo (`llama-server`).
-- **El coach**: con cada pregunta, un segundo agente propone al lado dos posibles respuestas — una basada **estrictamente en tu CV** y una respuesta modelo. En modo demo el panel lo indica y no inventa nada.
+- **El preguntador**: un agente decide qué preguntar. En modo *demo* usa un motor interno; en modo *local* lo interpreta tu propio modelo (`llama-server`). Elige los **temas** de la entrevista en el panel izquierdo (sobre ti, comportamiento, backend, Python y automatización, bases de datos, DevOps): con todo activo alterna lo personal, lo no técnico y lo técnico.
+- **El coach**: con cada pregunta, un segundo agente propone al lado dos posibles respuestas — una basada **estrictamente en tu CV** (corpus bilingüe es/en: nunca inventa datos ni métricas) y una respuesta modelo. En modo demo el panel lo indica y no inventa nada.
 - **La voz del entrevistador**: síntesis de voz del navegador (`SpeechSynthesis`). Hay un botón para reproducir cada pregunta.
 - **Tu respuesta**: se graba con el micrófono y se transcribe con Whisper (vía servidor local) o con la API de voz del navegador. Puedes repetir la grabación las veces que necesites.
 - **La evaluación**: al final, el agente devuelve una puntuación con fortalezas y zonas de mejora.
@@ -57,13 +57,15 @@ Verifícalo con `systemctl is-active ollama` (debe decir `inactive`) y `nvidia-s
 ```
 interview-simulator/
 ├── index.html          Landing + selector de idioma
-├── interview.html      Sesión de entrevista
+├── interview.html      Sesión de entrevista (panales de Temas y Coach)
 ├── css/{main,landing,interview}.css
-├── js/{i18n,config,questions,speech,orb,agent,app,reveal,whisper-ui}.js
-│     · app.js        orquestación de la sesión
-│     · speech.js     STT (navegador / Whisper) + TTS
-│     · agent.js      entrevistador (builtin / llama-server)
+├── js/{i18n,config,cv,questions,speech,orb,agent,app,reveal,whisper-ui,agent-ui}.js
+│     · app.js        orquestación de la sesión + Temas + Coach
+│     · speech.js     STT (navegador / Whisper WAV) + TTS (navegador / Piper) + tests
+│     · agent.js      entrevistador, coach y evaluador (builtin / llama-server)
+│     · cv.js         corpus bilingüe del candidato (fuente del coach)
 │     · whisper-ui.js detección del servidor Whisper + copia del comando
+│     · agent-ui.js   detección del servidor del agente + modelo cargado
 │     · reveal.js     animaciones de entrada
 └── README.md
 ```

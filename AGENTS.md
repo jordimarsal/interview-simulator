@@ -5,7 +5,7 @@
 
 ## 1. Què és
 
-Simulador d'entrevistes per veu en **castellà i anglès**: un agent entrevistador pregunta, el candidat respon parlant i un avaluador puntua cada resposta. **Autocontingut**: s'obre fent doble clic a `index.html` (protocool `file://`), sense build, sense CDN, sense frameworks, sense compte. Tot ha de funcionar offline en mode demo.
+Simulador d'entrevistes per veu en **castellà i anglès**: un agent entrevistador pregunta, el candidat respon parlant, un **Coach** proposa dues respostes possibles a cada pregunta (una estrictament del CV) i un avaluador puntua al final. **Autocontingut**: s'obre fent doble clic a `index.html` (protocool `file://`), sense build, sense CDN, sense frameworks, sense compte. Tot ha de funcionar offline en mode demo.
 
 ## 2. Estructura i rols
 
@@ -15,13 +15,19 @@ interview.html      Sessió d'entrevista (tots els mòduls)
 css/{main,landing,interview}.css
 js/i18n.js          Strings bilingües + aplicació de locale + wire del selector
 js/config.js        Config persistida (localStorage) + drawer de settings + veus/micròfons
-js/questions.js     Banc de preguntes per idioma i tipus
-js/speech.js        TTS (SpeechSynthesis) + STT (Web Speech | Whisper via MediaRecorder)
+js/questions.js     Banc de 26 preguntes bilingües + TOPICS (personal, behavioral,
+                    backend, python, databases, devops) + setTopics()/topicLabels()
+                    per al selector de temes (filtra builtin i prompt remot)
+js/speech.js        TTS (Piper :8082 | SpeechSynthesis) + STT (Web Speech | Whisper
+                    via MediaRecorder→WAV) + testMic() i test de veu
 js/orb.js           Visualització canvas de l'orbe (estats idle/agent/listening/thinking)
-js/agent.js         Entrevistador: mode 'builtin' (heurístic) | 'remote' (llama-server)
-js/cv.js            PERFIL DEL CANDIDAT (font: docs/CV_26.md) — el Coach només pot
-                    basar la resposta "cv" en aquestes dades; res inventat
+js/agent.js         Entrevistador + Coach + Avaluador: mode 'builtin' (heurístic)
+                    | 'remote' (llama-server). chat(opts) és el punt únic LLM
+js/cv.js            Corpus bilingüe VERBATIM_CV = {es, en} (fonts: CV Python Senior
+                    2026 .docx + docs/CV_26.md) — el Coach només pot basar la
+                    resposta "cv" en aquestes dades; res inventat
 js/app.js           Orquestrador/màquina d'estats: IDLE→ASKING→RECORDING→THINKING→…
+                    + panells Coach i Temes + botons de prova de micro i veu
 js/whisper-ui.js    Targeta de detecció del servidor Whisper + copia del comandament
 js/agent-ui.js      Targeta de detecció del servidor de l'agent + nom del model carregat
 js/reveal.js        Animacions d'entrada
@@ -35,7 +41,8 @@ Servidor de veu local (fora del repo): `~/ia/piper/server.py` + llançador `~/ia
 - **`file://` és ciutadania de primera**: cap mòdul pot dependre de http(s), CDN, workers o cookies. `fetch` a `localhost` és permès (llama-server envia CORS que reflecteix l'origen).
 - **`i18n.STRINGS` està indexat per CLAU, no per idioma**: `STRINGS["nav_start"].es` — mai `STRINGS["es"]`. Aquesta confusió de forma ja va trencar el selector d'idioma una vegada.
 - **`agent.js chat(opts)`** rep UN sol objecte `{messages, max_tokens, temperature, response_format}`. El body ha d'incloure `messages` sempre (un 400 silenciat es converteix en `""` → bombolla buida). Si una pregunta arriba buida, cal llançar error perquè `poseQuestion` mostri el fallback.
-- **Coach (`Agent.suggestAnswers`)**: per cada pregunta retorna `{cv, general}` com a JSON. La resposta `cv` ha de fonamentar-se ESTRICTAMENT en `window.VERBATIM_CV` (js/cv.js, font docs/CV_26.md) — res inventat. En mode builtin el panell mostra un hint, no respostes falses.
+- **Coach (`Agent.suggestAnswers(question, lang, history)`)**: per cada pregunta retorna `{cv, general}` (JSON amb `facts` primer: 1-2 dades del perfil rellevants, després la resposta només desenvolupa aquests fets). Rep l'històric recent per resoldre anàfores («those challenges»). La resposta `cv` ha de fonamentar-se ESTRICTAMENT en `window.VERBATIM_CV[lang]` (js/cv.js, corpus bilingüe) — res inventat, **cap mètrica ni `%`**: els models s'ancoren a «reduced X by 40%» i el corpus no té xifres; `stripPercentSentences()` ho garanteix mecànicament. En mode builtin el panell mostra un hint, no respostes falses.
+- **Temes**: `Questions.setTopics()` filtra el banc per al selector esquerre (builtin) i `topicLabels(lang)` injecta «TEMAS PERMITIDOS» al prompt remot. Una pregunta sense tema vàlid mai ha de bloquejar la sessió (degradació: repeteix dins del tema, després tot el banc).
 - **`app.js` sobreescriu `fields.load/save`** en cridar `Config.initDrawer(...)`: la ruta viva del drawer és `loadSettingsIntoDrawer()` i el `save` inline d'app.js. El que es cablegi a `config.js wireDrawer()` és codi mort si app.js no l'usa.
 - **Permisos de micro**: els labels de `enumerateDevices()` arriben només després d'un `getUserMedia`. El desbloqueig es fa NOMÉS en obrir ⚙️ (`populateMics(sel, true)`), mai en carregar la pàgina.
 - **Web Speech API no permet triar micròfon** (limitació de plataforma): la selecció (`micId`) només afecta la gravació Whisper (`deviceId: {exact}`).
@@ -83,6 +90,9 @@ for f in js/*.js; do node --check "$f"; done
 1. **Selector d'idioma mort**: guard de `setLocale` indexava STRINGS per idioma → sempre `return`. Fix: validar `"es"/"en"` explícitament.
 2. **Dropdown de micro buit**: `app.js` sobreescriu `fields.load`; calia poblar `cfg-mic` a `loadSettingsIntoDrawer()` i persistir `micId` al save inline.
 3. **Entrevistador mut en mode remot**: `chat(messages, opts)` mai incloïa `messages` al body → 400 → `""` → targeta buida + TTS silenciat. Fix: signatura `chat(opts)`.
+4. **Transcripció invisible en mode Whisper**: `afterAnswer` descartava la targeta sense pintar el text final (el camí Whisper no té onTick en viu). Fix: pintar el text abans de `lastUserLi = null`.
+5. **STT buit amb whisper-server viu**: MediaRecorder grava webm i el server només descodifica WAV → error silenciós. Fix: conversió WAV al navegador (i mai `blob.arrayBuffer().slice(0)`: `arrayBuffer()` ja és promesa).
+6. **Coach esbiaixat pel corpus**: el CV en castellà arrossegava la resposta en anglès → corpus bilingüe + etiquetes/remind de l'idioma de sortida; i volcat de CV en lloc de resposta → esquema facts-first + guard anti-`%`.
 
 ## 7. Abans de diu que "està fet"
 
