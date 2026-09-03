@@ -5,6 +5,7 @@ Simulador de entrevistas por voz en **castellano** e **inglés**. Un entrevistad
 ## Qué es y cómo funciona
 
 - **El preguntador**: un agente decide qué preguntar. En modo *demo* usa un motor interno; en modo *local* lo interpreta tu propio modelo (`llama-server`).
+- **El coach**: con cada pregunta, un segundo agente propone al lado dos posibles respuestas — una basada **estrictamente en tu CV** y una respuesta modelo. En modo demo el panel lo indica y no inventa nada.
 - **La voz del entrevistador**: síntesis de voz del navegador (`SpeechSynthesis`). Hay un botón para reproducir cada pregunta.
 - **Tu respuesta**: se graba con el micrófono y se transcribe con Whisper (vía servidor local) o con la API de voz del navegador. Puedes repetir la grabación las veces que necesites.
 - **La evaluación**: al final, el agente devuelve una puntuación con fortalezas y zonas de mejora.

@@ -164,3 +164,22 @@ Layout of the room                                                    */
 .toasts { position: fixed; bottom: 6.5rem; left: 0; right: 0; z-index: 60; display:flex; flex-direction:column; align-items:center; gap:0.5rem; pointer-events:none; }
 .toast { padding: 0.6rem 1rem; border-radius: 999px; background: var(--bg-3); border:1px solid var(--line-strong); font-size: 0.82rem; color: var(--ink-dim); box-shadow: 0 10px 30px -12px rgba(0,0,0,0.7); animation: toastIn 0.4s var(--ease-out-expo); }
 @keyframes toastIn { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+/* Coach panel: suggested answers next to each question */
+.coach { margin: 1.6rem 0 0; padding: 1rem 1.1rem; border-radius: 16px; background: rgba(255,255,255,0.035); border: 1px solid var(--line-strong); }
+.coach__head { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.7rem; }
+.coach__dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); flex: none; }
+.coach__title { font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.coach__body { display: flex; flex-direction: column; gap: 0.7rem; }
+.coach__note { font-size: 0.85rem; color: var(--faint); }
+.coach__loading { animation: coachPulse 1.4s ease-in-out infinite; }
+@keyframes coachPulse { 0%,100%{opacity:0.45;} 50%{opacity:1;} }
+.coach__card { padding: 0.8rem 0.9rem; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); }
+.coach__label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
+.coach__text { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--ink-dim); }
+@media (prefers-reduced-motion: reduce) { .coach__loading { animation: none; } }
+
+@media (min-width: 1100px) {
+  .room .container { padding-right: 372px; }
+  .coach { position: fixed; top: 92px; right: max(24px, calc((100vw - 1200px)/2 + 24px)); width: 336px; max-height: calc(100vh - 220px); overflow-y: auto; margin: 0; z-index: 5; }
+}

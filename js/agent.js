@@ -25,6 +25,11 @@
     en: "You are a technical recruiter scoring an interview answer. Return ONLY valid JSON (no code fences, no prose) with this schema: {\"score\": <integer 0-100>, \"strengths\": [<string>, ...], \"improvements\": [<string>, ...], \"summary\": <short sentence>}. Reward coherence, technical depth, concrete examples and clear communication. Be fair but honest."
   };
 
+  const COACH_SYSTEM = {
+    es: "Eres el coach del candidato durante una entrevista técnica. Devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"cv\": \"...\", \"general\": \"...\"}. \"cv\": una respuesta posible a la pregunta basada ESTRICTAMENTE en el PERFIL DEL CANDIDATO que te doy — usa solo experiencia, logros y tecnologías que aparezcan ahí; nada inventado. \"general\": una respuesta modelo alternativa, sólida pero sin datos personales. Cada respuesta en 2-4 frases, primera persona, tono natural de entrevista.",
+    en: "You are the candidate's coach during a technical interview. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"cv\": \"...\", \"general\": \"...\"}. \"cv\": one possible answer to the question based STRICTLY on the CANDIDATE PROFILE provided — use only experience, achievements and technologies present there; nothing invented. \"general\": an alternative model answer, strong but without personal data. Each answer 2-4 sentences, first person, natural interview tone."
+  };
+
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
   /* ---------------- builtin heuristic scorer ---------------- */
@@ -178,6 +183,24 @@
         try { return await evaluateRemote(question, answer, lang); } catch (e) {}
       }
       return evaluateBuiltin(answer);
+    },
+
+    /* Coach: two candidate answers for the current question — one grounded
+       STRICTLY in the candidate's CV, one generic model answer. */
+    suggestAnswers: async function (question, lang) {
+      if (this.mode !== "remote") return null;
+      const sys = COACH_SYSTEM[lang] || COACH_SYSTEM.es;
+      const raw = await chat({
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: "PREGUNTA: " + question + "\n\nPERFIL DEL CANDIDATO (CV):\n" + (window.VERBATIM_CV || "(no disponible)") }
+        ],
+        response_format: { type: "json_object" }, max_tokens: 500, temperature: 0.7
+      });
+      let parsed = null;
+      try { const m = raw.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); } catch (e) {}
+      if (!parsed || !parsed.cv || !parsed.general) throw new Error("bad coach JSON");
+      return { cv: String(parsed.cv).trim(), general: String(parsed.general).trim() };
     }
   };
 

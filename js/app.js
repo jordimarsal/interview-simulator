@@ -135,7 +135,41 @@
       history.push({ role: "agent", text: currentQ });
       window.Speech.tts(currentQ);
       if (orb) orb.ripple();
-    }).catch(function () { currentQ = T("room_lede"); addAgentCard(currentQ); });
+      renderSuggestions(currentQ);
+    }).catch(function () { currentQ = T("room_lede"); addAgentCard(currentQ); renderSuggestions(currentQ); });
+  }
+
+  /* Coach panel: two candidate answers per question (one from the CV). */
+  function renderSuggestions(question) {
+    const body = $("coach-body");
+    if (!body) return;
+    const mode = (window.Agent && window.Agent.mode) || "builtin";
+    if (mode !== "remote" || !question) {
+      body.innerHTML = '<p class="coach__note"></p>';
+      body.firstChild.textContent = T("coach_demo_hint");
+      return;
+    }
+    body.innerHTML = '<p class="coach__note coach__loading"></p>';
+    body.firstChild.textContent = T("coach_thinking");
+    window.Agent.suggestAnswers(question, L()).then(function (s) {
+      body.innerHTML = "";
+      [["coach_cv", s.cv], ["coach_general", s.general]].forEach(function (pair) {
+        const card = document.createElement("div");
+        card.className = "coach__card";
+        const lbl = document.createElement("div");
+        lbl.className = "coach__label";
+        lbl.textContent = T(pair[0]);
+        const txt = document.createElement("p");
+        txt.className = "coach__text";
+        txt.textContent = pair[1];
+        card.appendChild(lbl);
+        card.appendChild(txt);
+        body.appendChild(card);
+      });
+    }).catch(function () {
+      body.innerHTML = '<p class="coach__note"></p>';
+      body.firstChild.textContent = T("coach_error");
+    });
   }
 
   function startAnswering() {

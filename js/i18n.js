@@ -265,6 +265,25 @@
       es: "— sin audio detectado —",
       en: "— no audio detected —"
     },
+    coach_title: { es: "Coach", en: "Coach" },
+    coach_waiting: {
+      es: "Cuando el entrevistador haga una pregunta, aquí verás dos posibles respuestas.",
+      en: "When the interviewer asks a question, you'll see two possible answers here."
+    },
+    coach_thinking: {
+      es: "Pensando posibles respuestas…",
+      en: "Thinking of possible answers…"
+    },
+    coach_cv: { es: "Basada en tu CV", en: "Based on your CV" },
+    coach_general: { es: "Respuesta modelo", en: "Model answer" },
+    coach_demo_hint: {
+      es: "El coach necesita el Agente entrevistador en modo Local (⚙️ → Agente entrevistador).",
+      en: "The coach needs the interviewer agent in Local mode (⚙️ → Interviewer agent)."
+    },
+    coach_error: {
+      es: "El coach no pudo generar respuestas en este turno. Sigue con la entrevista.",
+      en: "The coach couldn't generate answers this turn. Carry on with the interview."
+    },
     s_tts_test: { es: "Probar voz", en: "Test voice" },
     tts_test_phrase: {
       es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",

@@ -19,6 +19,8 @@ js/questions.js     Banc de preguntes per idioma i tipus
 js/speech.js        TTS (SpeechSynthesis) + STT (Web Speech | Whisper via MediaRecorder)
 js/orb.js           Visualització canvas de l'orbe (estats idle/agent/listening/thinking)
 js/agent.js         Entrevistador: mode 'builtin' (heurístic) | 'remote' (llama-server)
+js/cv.js            PERFIL DEL CANDIDAT (font: docs/CV_26.md) — el Coach només pot
+                    basar la resposta "cv" en aquestes dades; res inventat
 js/app.js           Orquestrador/màquina d'estats: IDLE→ASKING→RECORDING→THINKING→…
 js/whisper-ui.js    Targeta de detecció del servidor Whisper + copia del comandament
 js/agent-ui.js      Targeta de detecció del servidor de l'agent + nom del model carregat
@@ -33,6 +35,7 @@ Servidor de veu local (fora del repo): `~/ia/piper/server.py` + llançador `~/ia
 - **`file://` és ciutadania de primera**: cap mòdul pot dependre de http(s), CDN, workers o cookies. `fetch` a `localhost` és permès (llama-server envia CORS que reflecteix l'origen).
 - **`i18n.STRINGS` està indexat per CLAU, no per idioma**: `STRINGS["nav_start"].es` — mai `STRINGS["es"]`. Aquesta confusió de forma ja va trencar el selector d'idioma una vegada.
 - **`agent.js chat(opts)`** rep UN sol objecte `{messages, max_tokens, temperature, response_format}`. El body ha d'incloure `messages` sempre (un 400 silenciat es converteix en `""` → bombolla buida). Si una pregunta arriba buida, cal llançar error perquè `poseQuestion` mostri el fallback.
+- **Coach (`Agent.suggestAnswers`)**: per cada pregunta retorna `{cv, general}` com a JSON. La resposta `cv` ha de fonamentar-se ESTRICTAMENT en `window.VERBATIM_CV` (js/cv.js, font docs/CV_26.md) — res inventat. En mode builtin el panell mostra un hint, no respostes falses.
 - **`app.js` sobreescriu `fields.load/save`** en cridar `Config.initDrawer(...)`: la ruta viva del drawer és `loadSettingsIntoDrawer()` i el `save` inline d'app.js. El que es cablegi a `config.js wireDrawer()` és codi mort si app.js no l'usa.
 - **Permisos de micro**: els labels de `enumerateDevices()` arriben només després d'un `getUserMedia`. El desbloqueig es fa NOMÉS en obrir ⚙️ (`populateMics(sel, true)`), mai en carregar la pàgina.
 - **Web Speech API no permet triar micròfon** (limitació de plataforma): la selecció (`micId`) només afecta la gravació Whisper (`deviceId: {exact}`).

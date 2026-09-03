@@ -64,6 +64,17 @@
       </div>
 
       <ol class="timeline" id="timeline"></ol>
+
+      <!-- COACH: sugerencias del agente para cada pregunta -->
+      <aside class="coach" id="coach" aria-live="polite">
+        <div class="coach__head">
+          <span class="coach__dot" aria-hidden="true"></span>
+          <span class="coach__title" data-i18n="coach_title">Coach</span>
+        </div>
+        <div class="coach__body" id="coach-body">
+          <p class="coach__note" data-i18n="coach_waiting"></p>
+        </div>
+      </aside>
     </div>
   </main>
 
@@ -188,6 +199,7 @@
   <!-- Scripts -->
   <script src="js/i18n.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/cv.js"></script>
   <script src="js/questions.js"></script>
   <script src="js/speech.js"></script>
   <script src="js/orb.js"></script>
