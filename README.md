@@ -27,6 +27,9 @@ Ejecuta dos servidores locales (puertos distintos) y apunta la app a ellos desde
 
 # Transcripción (Whisper) — CPU, puerto 8081 (no compite por la VRAM con el LLM)
 ~/ia/run-whisper.sh
+
+# Voz neuronal (Piper) — opcional, puerto 8082
+~/ia/run-piper.sh
 ```
 
 Los dos lanzadores son **idempotentes**: si el servidor ya está corriendo, lo detectan y simplemente siguen su log (`Ctrl+C` para salir del log sin parar el servidor).
@@ -35,7 +38,7 @@ La app ya viene apuntando a los puertos por defecto:
 - Endpoint Whisper: `http://localhost:8081/inference`  (POST multipart `file` → `{"text":"…"}`)
 - Agente LLM: `http://localhost:8080/v1/chat/completions`
 
-Activa **Whisper** en ⚙️ → «Motor de transcripción» y el **Agente entrevistador** en «Local».
+Activa **Whisper** en ⚙️ → «Motor de transcripción» y el **Agente entrevistador** en «Local». Para la voz neuronal, elige **Piper** en «Voz del entrevistador». Desde ⚙️ puedes **probar el micro** (graba 3 s, te dice el nivel y qué entiende Whisper) y **probar la voz**.
 
 > Modelo recomendado para el agente: `~/ia/llama/models/Qwen3-VL-8B-Instruct-1M-Q6_K.gguf` (instruct-tuned, ~5 GB, cabe entera en una GPU; contexto de 1 M). Arráncalo con `~/ia/run-agent.sh` — verificado: turno de pregunta en ~0,3 s en GPU. Para transcripción usa el modelo pequeño `~/ia/ggml-small.bin` con whisper.cpp; si prefieres transcripción sin servidor, activa **«Voz del navegador»** en Configuración (Chrome/Edge).
 

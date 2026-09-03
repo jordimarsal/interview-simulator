@@ -148,7 +148,7 @@
     activeTranscription = window.Speech.transcribe(L(), function (tick) {
       const bar = liFind(card.li, ".bar > i"), st = liFind(card.li, ".tier-state");
       if (bar) bar.style.width = Math.min(98, (tick.length / 400) * 100) + "%";
-      if (st) st.textContent = tick ? Math.max(1, Math.round(tick.length / 2)) + "s" : "grabando";
+      if (st) st.textContent = tick ? Math.max(1, Math.round(tick.length / 2)) + "s" : T("status_listening");
       card.textEl.textContent = tick || "";
     });
     activeTranscription.start();
@@ -164,6 +164,11 @@
   function afterAnswer(text) {
     text = text || "";
     setMic(false);
+    // paint the final transcript into the user's card (whisper path has no live onTick)
+    if (lastUserLi) {
+      const t = lastUserLi.querySelector("[data-transcript]");
+      if (t) t.textContent = text || T("s_answer_empty");
+    }
     history.push({ role: "user", text: text });
     lastUserLi = null;
     state = S.THINKING; setStatus(); setPrompt(T("prompt_thinking"));
@@ -256,8 +261,19 @@
     $("cfg-whisper").value = c.whisperUrl;
     $("cfg-llm").value = c.llmUrl;
     $("cfg-key").value = c.apiKey || "";
+    $("cfg-tts-engine").value = c.ttsEngine || "browser";
+    $("cfg-piper").value = c.piperUrl || "";
+    syncTtsEngineUi();
     window.Config.voices(document.getElementById("cfg-tts"));
     window.Config.mics(document.getElementById("cfg-mic"));
+  }
+
+  /* Piper ignores the browser-voice dropdown: hide it while active. */
+  function syncTtsEngineUi() {
+    const piper = $("cfg-tts-engine").value === "piper";
+    document.querySelectorAll(".browser-voice-only").forEach(function (el) {
+      el.classList.toggle("hidden", piper);
+    });
   }
 
   /* ---------------- wiring ---------------- */
@@ -281,6 +297,8 @@
           llmUrl: $("cfg-llm").value.trim(),
           apiKey: $("cfg-key").value.trim(),
           micId: (msel && msel.value) ? msel.value : "",
+          ttsEngine: $("cfg-tts-engine").value,
+          piperUrl: $("cfg-piper").value.trim(),
           tts: (vsel && vsel.value) ? vsel.value : ""
         };
         window.Config.set(patch);
@@ -292,6 +310,25 @@
     $("settings-btn").addEventListener("click", function () {
       window.Config.mics(document.getElementById("cfg-mic"), true);
     });
+    $("cfg-tts-test").addEventListener("click", function () {
+      window.Speech.tts(T("tts_test_phrase"), {
+        engine: ($("cfg-tts-engine") && $("cfg-tts-engine").value) || "browser",
+        voiceURI: ($("cfg-tts") && $("cfg-tts").value) || ""
+      });
+    });
+    $("cfg-mic-test").addEventListener("click", function () {
+      const btn = $("cfg-mic-test");
+      if (btn.disabled) return;
+      btn.disabled = true;
+      toast(T("s_mic_test_rec"));
+      window.Speech.testMic().then(function (r) {
+        btn.disabled = false;
+        if (!r) { toast(T("err_no_mic")); return; }
+        if (r.rms < 0.004) toast(T("s_mic_test_low"));
+        else toast(T("s_mic_test_ok") + (r.text ? " · «" + r.text.slice(0, 40) + "»" : ""));
+      }).catch(function () { btn.disabled = false; toast(T("err_no_mic")); });
+    });
+    $("cfg-tts-engine").addEventListener("change", syncTtsEngineUi);
     document.addEventListener("keydown", function (e) {
       if (e.code !== "Space" || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
       e.preventDefault(); onMicTap();
@@ -316,6 +353,8 @@
     if (window.Agent) window.Agent.startSession();
     initOrb(); wire(); setStatus(); setPrompt(T("prompt_waiting"));
     loadSettingsIntoDrawer();
+    // speech errors surface as toasts instead of silent empty strings
+    window.Speech.onError = function (msg) { if (msg) toast(msg); };
   }
   if (document.readyState === "complete" || document.readyState === "interactive") init();
   else window.addEventListener("DOMContentLoaded", init);

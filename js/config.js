@@ -13,6 +13,8 @@
   const DEFAULTS = {
     stt: "browser",          // 'browser' (offline) | 'whisper' (local/cloud server)
     tts: "",                 // voiceURI; empty => browser picks
+    ttsEngine: "browser",    // 'browser' | 'piper' (local neural server)
+    piperUrl: "http://localhost:8082/tts",
     micId: "",               // deviceId for Whisper recording; empty => system default
     agent: "builtin",        // 'builtin' | 'remote'
     whisperUrl: "http://localhost:8081/inference",

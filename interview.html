@@ -135,12 +135,20 @@
       <div class="field">
         <label for="cfg-mic" data-i18n="s_mic_input">Micrófono de entrada</label>
         <select id="cfg-mic"></select>
+        <button type="button" class="mini" id="cfg-mic-test" data-i18n="s_mic_test">Probar micro</button>
         <small data-i18n="s_mic_hint"></small>
       </div>
       <div class="field">
-        <label for="cfg-tts" data-i18n="s_tts_engine">Voz del entrevistador (TTS)</label>
-        <select id="cfg-tts"></select>
-        <small data-i18n="">Elige la voz que pronuncia las preguntas.</small>
+        <label for="cfg-tts-engine" data-i18n="s_tts_engine">Voz del entrevistador (TTS)</label>
+        <select id="cfg-tts-engine">
+          <option value="browser">Voz del navegador</option>
+          <option value="piper">Piper — neuronal local (~/ia/run-piper.sh)</option>
+        </select>
+        <input type="text" id="cfg-piper" placeholder="http://localhost:8082/tts" style="margin-top:0.5rem;" />
+        <select id="cfg-tts" class="browser-voice-only" style="margin-top:0.5rem;"></select>
+        <button type="button" class="mini" id="cfg-tts-test" data-i18n="s_tts_test">Probar voz</button>
+        <small data-i18n="s_tts_piper_hint"></small>
+        <small class="browser-voice-only" data-i18n="">Elige la voz que pronuncia las preguntas (voz del navegador).</small>
       </div>
       <div class="field">
         <label for="cfg-agent" data-i18n="s_agent_engine">Agente entrevistador</label>

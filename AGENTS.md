@@ -25,6 +25,9 @@ js/agent-ui.js      Targeta de detecció del servidor de l'agent + nom del model
 js/reveal.js        Animacions d'entrada
 ```
 
+Servidor de veu local (fora del repo): `~/ia/piper/server.py` + llançador `~/ia/run-piper.sh`
+— POST `/tts {text, lang}` → WAV (es: `daniela-high`, en: `lessac-medium`).
+
 ## 3. Contractes que no es poden trencar
 
 - **`file://` és ciutadania de primera**: cap mòdul pot dependre de http(s), CDN, workers o cookies. `fetch` a `localhost` és permès (llama-server envia CORS que reflecteix l'origen).
@@ -33,7 +36,10 @@ js/reveal.js        Animacions d'entrada
 - **`app.js` sobreescriu `fields.load/save`** en cridar `Config.initDrawer(...)`: la ruta viva del drawer és `loadSettingsIntoDrawer()` i el `save` inline d'app.js. El que es cablegi a `config.js wireDrawer()` és codi mort si app.js no l'usa.
 - **Permisos de micro**: els labels de `enumerateDevices()` arriben només després d'un `getUserMedia`. El desbloqueig es fa NOMÉS en obrir ⚙️ (`populateMics(sel, true)`), mai en carregar la pàgina.
 - **Web Speech API no permet triar micròfon** (limitació de plataforma): la selecció (`micId`) només afecta la gravació Whisper (`deviceId: {exact}`).
-- **Ports**: agent LLM `:8080` (`/v1/chat/completions`, `/v1/models`), Whisper `:8081` (`/inference`, POST multipart `file` → `{"text"}`). Llançadors idempotents: `~/ia/run-agent.sh`, `~/ia/run-whisper.sh`.
+- **Ports**: agent LLM `:8080` (`/v1/chat/completions`, `/v1/models`), Whisper `:8081` (`/inference`, POST multipart `file`+`language` → `{"text"}`), Piper TTS `:8082` (`/tts`, JSON `{text,lang}` → WAV). Llançadors idempotents: `~/ia/run-agent.sh`, `~/ia/run-whisper.sh`, `~/ia/run-piper.sh`.
+- **Whisper sempre amb `language` forçat** (es/en): l'auto-detecció al·lucina en àudio marginal (anglès fantasma, `[BEEP]`, `[BLANK_AUDIO]`). El text de transcripció es neteja de marcadors no-verbals (`[...]`/`(...)`) abans de mostrar-se.
+- **El whisper-server només descodifica WAV** (no està enllaçat amb ffmpeg): un POST webm/mp4 respon `{"error":"failed to read audio data"}`. Per això `speech.js` converteix la gravació de MediaRecorder a **WAV 16 kHz mono PCM16 al navegador** (`decodeAudioData` + `OfflineAudioContext` + `encodeWavPcm16`) abans de POSTar. No eliminar aquesta conversió.
+- **Errors d'STT/TTS mai en silenci**: es superfícien via `window.Speech.onError(msg)` (app.js els mostra com a toast). Una resposta buida sense avís és un bug, no un comportament acceptable.
 - **Copy bilingüe**: tot text nou va a `i18n.js` amb clau estable i entrades `es` + `en`. Sense textos hardcoded als HTML (usa `data-i18n`).
 
 ## 4. Estil de codi

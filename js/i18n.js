@@ -217,9 +217,58 @@
       en: "Agent server detected — model loaded:"
     },
 
+    s_mic_test: { es: "Probar micro", en: "Test mic" },
+    s_mic_test_rec: { es: "Grabando 3 s… habla ahora", en: "Recording 3 s… speak now" },
+    s_mic_test_ok: { es: "Micrófono OK", en: "Mic OK" },
+    s_mic_test_low: {
+      es: "Nivel muy bajo: revisa el micrófono elegido o el volumen de entrada del sistema.",
+      en: "Very low level: check the chosen mic or the system input volume."
+    },
+    s_tts_piper_hint: {
+      es: "Piper es una red neuronal local: arráncalo con ~/ia/run-piper.sh (puerto 8082). La voz del navegador usa las voces del sistema.",
+      en: "Piper is a local neural network: start it with ~/ia/run-piper.sh (port 8082). The browser voice uses system voices."
+    },
+    err_tts_piper: {
+      es: "No se pudo usar Piper; uso la voz del navegador.",
+      en: "Couldn't reach Piper; using the browser voice."
+    },
+
     err_no_mic: {
       es: "No se pudo acceder al micrófono. Permite el acceso e inténtalo de nuevo.",
       en: "Microphone access was denied. Allow microphone access and try again."
+    },
+    err_stt_convert: {
+      es: "No se pudo convertir el audio a WAV; se envía el formato original.",
+      en: "Couldn't convert audio to WAV; sending the original format."
+    },
+    err_stt_failed: {
+      es: "No se pudo transcribir. Comprueba que el servidor de Whisper esté corriendo.",
+      en: "Transcription failed. Check that the Whisper server is running."
+    },
+    err_stt_empty: {
+      es: "No se ha detectado voz en la grabación. Habla más cerca del micrófono.",
+      en: "No speech detected in the recording. Speak closer to the microphone."
+    },
+    err_mic_silence: {
+      es: "La grabación llega casi vacía (nivel muy bajo): revisa el micrófono elegido en ⚙️ o sube el volumen de entrada del sistema.",
+      en: "The recording arrives nearly empty (very low level): check the microphone chosen in ⚙️ or raise the system input volume."
+    },
+    err_tts_novoice: {
+      es: "Sin voces del sistema: la voz del entrevistador no sonará. Instala/activa speech-dispatcher (Linux) o elige una voz en ⚙️.",
+      en: "No system voices: the interviewer will be silent. Install/enable speech-dispatcher (Linux) or pick a voice in ⚙️."
+    },
+    err_tts_failed: {
+      es: "Fallo de síntesis de voz",
+      en: "Speech synthesis failed"
+    },
+    s_answer_empty: {
+      es: "— sin audio detectado —",
+      en: "— no audio detected —"
+    },
+    s_tts_test: { es: "Probar voz", en: "Test voice" },
+    tts_test_phrase: {
+      es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",
+      en: "Hi. I'm your interviewer. This is how I'll sound during the session."
     },
     err_not_supported: {
       es: "Este navegador no soya grabación de voz. Usa Chrome/Edge/Firefox actualizado.",
