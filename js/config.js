@@ -65,20 +65,64 @@
   /* Populate the microphone <select> from enumerateDevices().
      Labels only arrive once mic permission has been granted, so we make a
      one-shot getUserMedia attempt to unlock them (tracks stopped right
-     away). Falls back to numbered generic labels when denied. */
+     away). Falls back to numbered generic labels when denied.
+
+     Two tags help find "the mic that actually records":
+     - the system default's real name is resolved from Chrome's pseudo
+       device (deviceId "default", label "Default - <RealName>") and shown
+       in the first option + a tag on the matching device entry;
+     - the device capturing right now (recording / mic test) gets the
+       "en uso" tag via Speech.activeMicId(). */
+  function defaultRealName(mics) {
+    const pseudo = (mics || []).filter(function (d) {
+      return d.deviceId === "default" || d.deviceId === "communications";
+    }).map(function (d) { return (d.label || "").replace(/^.*?\s-\s/, "").trim(); })
+      .filter(function (n) { return n.length > 0; });
+    return pseudo.length ? pseudo[0] : "";
+  }
+  /* PipeWire/Linux exposes every output loopback as an audioinput labelled
+     "Monitor of ...". Recording one captures what the SYSTEM PLAYS — pure
+     silence when nothing sounds — and Firefox lists ~12 of them, drowning
+     the one real mic. They are never usable as an interview mic: drop. */
+  function isMonitorSource(d) { return /^monitor of /i.test(d.label || ""); }
   function populateMics(selectEl, unlockLabels) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
     function fill(devices) {
       const mics = (devices || []).filter(function (d) { return d.kind === "audioinput"; });
+      const defName = defaultRealName(mics);
+      const defLower = defName.toLowerCase();
+      const liveId = (window.Speech && window.Speech.activeMicId) ? window.Speech.activeMicId() : "";
+      /* Pre-heal a stale saved device: browsers rotate deviceIds between
+         sessions, and a dead micId makes every capture fail with
+         OverconstrainedError. Only judge when the list carries real ids
+         (permission already granted). */
+      const realIds = mics.filter(function (d) { return d.deviceId; }).map(function (d) { return d.deviceId; });
+      const savedDev = mics.filter(function (d) { return d.deviceId === _current.micId; })[0];
+      if (_current.micId && (
+        (realIds.length && realIds.indexOf(_current.micId) === -1) ||
+        (savedDev && isMonitorSource(savedDev))
+      )) {
+        save({ micId: "" });
+      }
       selectEl.innerHTML = "";
       const def = document.createElement("option");
       def.value = "";
-      def.textContent = i18n("s_mic_default");
+      def.textContent = defName
+        ? i18n("s_mic_default_name").replace("{name}", defName)
+        : i18n("s_mic_default");
       selectEl.appendChild(def);
-      mics.forEach(function (d, i) {
+      let generic = 0;
+      mics.forEach(function (d) {
+        const isPseudo = d.deviceId === "default" || d.deviceId === "communications";
+        if (isPseudo) return; // virtual entries: the real one is already listed
+        if (isMonitorSource(d)) return; // output loopback: records what plays, not the voice
+        generic++;
         const opt = document.createElement("option");
         opt.value = d.deviceId;
-        opt.textContent = d.label || (i18n("s_mic_generic") + " " + (i + 1));
+        let text = d.label || (i18n("s_mic_generic") + " " + generic);
+        if (defLower && text.toLowerCase() === defLower) text += " · " + i18n("s_mic_default_tag");
+        if (liveId && d.deviceId === liveId) text += " · " + i18n("s_mic_in_use");
+        opt.textContent = text;
         selectEl.appendChild(opt);
       });
       selectEl.value = (_current.micId && mics.some(function (d) { return d.deviceId === _current.micId; }))

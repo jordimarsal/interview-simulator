@@ -344,6 +344,14 @@
     $("settings-btn").addEventListener("click", function () {
       window.Config.mics(document.getElementById("cfg-mic"), true);
     });
+    /* Hot-plug: keep the mic list fresh while the drawer is open. */
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener("devicechange", function () {
+        if ($("settings-drawer").classList.contains("open")) {
+          window.Config.mics(document.getElementById("cfg-mic"));
+        }
+      });
+    }
     $("cfg-tts-test").addEventListener("click", function () {
       window.Speech.tts(T("tts_test_phrase"), {
         engine: ($("cfg-tts-engine") && $("cfg-tts-engine").value) || "browser",
@@ -355,12 +363,30 @@
       if (btn.disabled) return;
       btn.disabled = true;
       toast(T("s_mic_test_rec"));
-      window.Speech.testMic().then(function (r) {
+      const msel = document.getElementById("cfg-mic");
+      window.Speech.testMic(function () {
+        /* capture is live: tag the recording mic in the dropdown */
+        window.Config.mics(msel);
+      }).then(function (r) {
         btn.disabled = false;
+        window.Config.mics(msel); /* drop the tag once capture ends */
         if (!r) { toast(T("err_no_mic")); return; }
         if (r.rms < 0.004) toast(T("s_mic_test_low"));
-        else toast(T("s_mic_test_ok") + (r.text ? " · «" + r.text.slice(0, 40) + "»" : ""));
-      }).catch(function () { btn.disabled = false; toast(T("err_no_mic")); });
+        else toast(T("s_mic_test_ok") + (r.device ? " · " + r.device : "") + (r.text ? " · «" + r.text.slice(0, 40) + "»" : ""));
+      }).catch(function (e) {
+        btn.disabled = false; window.Config.mics(msel);
+        toast(window.Speech.micErrorText ? window.Speech.micErrorText(e) : T("err_no_mic"));
+      });
+    });
+    $("cfg-mic-diag").addEventListener("click", function () {
+      const btn = $("cfg-mic-diag");
+      const out = $("cfg-mic-diag-out");
+      if (!window.Speech || !window.Speech.micDiag) return;
+      btn.disabled = true;
+      out.hidden = false;
+      out.textContent = "";
+      window.Speech.micDiag(function (line) { out.textContent += line + "\n"; })
+        .then(function () { btn.disabled = false; });
     });
     $("cfg-tts-engine").addEventListener("change", syncTtsEngineUi);
 

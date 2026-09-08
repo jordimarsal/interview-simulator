@@ -79,6 +79,15 @@ Layout of the room                                                    */
 .mini svg { width: 0.9rem; height: 0.9rem; }
 .mini[aria-pressed="true"] { color: var(--accent); border-color: rgba(246,195,90,0.4); background: var(--accent-soft); }
 
+/* mic diagnostic output */
+.diag-out {
+  margin: 0.5rem 0 0.2rem; padding: 0.6rem 0.7rem; border-radius: 10px;
+  border: 1px dashed var(--line-strong); background: rgba(0,0,0,0.25);
+  font-family: var(--mono); font-size: 0.68rem; line-height: 1.5;
+  color: var(--muted); white-space: pre-wrap; word-break: break-all;
+  max-height: 14rem; overflow: auto;
+}
+
 /* transcription meter */
 .tier { display:flex; align-items:center; gap:0.5rem; font-family:var(--mono); font-size:0.72rem; color:var(--faint); }
 .tier .bar { flex:1; height:4px; border-radius:3px; background:rgba(255,255,255,0.1); overflow:hidden; }

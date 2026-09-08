@@ -32,6 +32,134 @@
   let _currentUtterance = null;
   let _currentAudio = null;
 
+  /* deviceId of the mic currently capturing (recording or mic test);
+     empty when nothing is live. Feeds the "en uso" tag in the mic dropdown. */
+  let _liveDeviceId = "";
+  function noteLiveStream(stream) {
+    try {
+      const t = stream && stream.getAudioTracks && stream.getAudioTracks()[0];
+      const id = t && t.getSettings ? (t.getSettings().deviceId || "") : "";
+      _liveDeviceId = id || ((window.Config && window.Config.get().micId) || "");
+    } catch (e) { _liveDeviceId = ""; }
+  }
+  function clearLiveStream() { _liveDeviceId = ""; }
+
+  /* ---------------- mic errors: diagnose, don't guess ----------------
+     Every getUserMedia failure used to look like "access denied" (test) or
+     nothing at all (recording). Map error names to actionable copy and
+     self-heal the one case we can fix: a saved micId that no longer exists
+     (browsers rotate deviceIds between sessions; the exact constraint then
+     fails forever with OverconstrainedError). */
+  function micErrorKey(e) {
+    const n = (e && e.name) || "";
+    if (n === "NotReadableError" || n === "TrackStartError") return "err_mic_busy";
+    if (n === "NotFoundError" || n === "DevicesNotFoundError") return "err_mic_missing";
+    if (n === "OverconstrainedError" || n === "ConstraintNotSatisfiedError") return "err_mic_stale";
+    return "err_no_mic"; // NotAllowedError / SecurityError / unknown
+  }
+  function micErrorText(e) { return i18nKey(micErrorKey(e)); }
+
+  function savedMicExists() {
+    const cfg = window.Config.get();
+    if (!cfg.micId || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      return Promise.resolve(true);
+    }
+    return navigator.mediaDevices.enumerateDevices().then(function (devs) {
+      const mics = (devs || []).filter(function (d) { return d.kind === "audioinput" && d.deviceId; });
+      if (!mics.length) return true; // permission not granted yet: can't judge
+      const saved = mics.filter(function (d) { return d.deviceId === cfg.micId; })[0];
+      /* A PipeWire "Monitor of ..." source records the system output, not
+         the voice: as wrong as a missing device, heal it the same way. */
+      if (saved && /^monitor of /i.test(saved.label || "")) {
+        window.Config.set({ micId: "" });
+        reportError("err_mic_monitor");
+        return false;
+      }
+      if (saved) return true;
+      window.Config.set({ micId: "" }); // stale id: fall back to system default
+      reportError("err_mic_stale");
+      return false;
+    }).catch(function () { return true; });
+  }
+
+  /* Open the mic honouring the saved choice. Validate BEFORE opening: a
+     stale id fails loudly, but a PipeWire "Monitor of ..." source opens
+     fine and records silence — exactly the "no audio detected" trap. */
+  function openMicStream() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return Promise.reject(Object.assign(new Error("no mediaDevices"), { name: "NotFoundError" }));
+    }
+    const tryGum = function (useExact) {
+      const cfg = window.Config.get();
+      return navigator.mediaDevices.getUserMedia({
+        audio: (useExact && cfg.micId) ? { deviceId: { exact: cfg.micId } } : true
+      });
+    };
+    if (!window.Config.get().micId) return tryGum(false);
+    return savedMicExists().then(function (usable) { return tryGum(usable); })
+      .catch(function (e) {
+        if (micErrorKey(e) !== "err_mic_stale") throw e;
+        return savedMicExists().then(function (kept) {
+          if (kept) throw e; // device still listed: not a stale-id problem
+          return tryGum(false);
+        });
+      });
+  }
+
+  /* One-click mic diagnostic: runs every boundary of the capture chain and
+     reports each result live via onLine. Ends with a 3 s testMic probe.
+     Lines are technical on purpose: they are data, not UI copy. */
+  function micDiag(onLine) {
+    const out = (typeof onLine === "function") ? onLine : function () {};
+    const lines = [];
+    function add(k, v) { const l = k + ": " + v; lines.push(l); out(l); }
+    const trackInfo = function (t) {
+      const s = (t.getSettings && t.getSettings()) || {};
+      return "label=" + (t.label || "?") + " id=" + String(s.deviceId || "?").slice(0, 10);
+    };
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      add("mediaDevices", "NO DISPONIBLE (¿contexto no seguro?)");
+      add("isSecureContext", String(window.isSecureContext));
+      return Promise.resolve(lines);
+    }
+    return navigator.mediaDevices.enumerateDevices().then(function (devs) {
+      const mics = (devs || []).filter(function (d) { return d.kind === "audioinput"; });
+      add("inputs", mics.length);
+      mics.forEach(function (d, i) {
+        const tag = /^monitor of /i.test(d.label || "") ? "  <-- MONITOR (sortida, no micro)" : "";
+        add("  [" + i + "] " + String(d.deviceId || "").slice(0, 10), (d.label || "<sense label/permís>") + tag);
+      });
+      const cfg = window.Config.get();
+      add("savedMicId", cfg.micId || "<cap, usa default del sistema>");
+      if (cfg.micId) add("savedMicPresent", mics.some(function (d) { return d.deviceId === cfg.micId; }));
+      const probe = function (audio, tag) {
+        return navigator.mediaDevices.getUserMedia({ audio: audio }).then(function (s) {
+          const t = s.getAudioTracks()[0];
+          const mon = /^monitor of /i.test(t.label || "") ? "  <-- MONITOR: grava la sortida, mai la veu" : "";
+          add(tag, "OK " + trackInfo(t) + mon);
+          s.getTracks().forEach(function (t) { t.stop(); });
+        }).catch(function (e) { add(tag, "ERROR " + e.name + " (" + e.message + ")"); });
+      };
+      const first = cfg.micId
+        ? probe({ deviceId: { exact: cfg.micId } }, "gum(savedId)")
+        : probe(true, "gum(default)");
+      return first.then(function () { return probe(true, "gum(audio:true)"); });
+    })
+    .then(function () {
+      add("testMic(3s)", "...");
+      return window.Speech ? window.Speech.testMic() : null;
+    })
+    .then(function (r) {
+      if (!r) add("testMic", "null");
+      else add("testMic", "rms=" + (r.rms || 0).toFixed(4)
+        + ((r.rms || 0) < 0.004 ? "  <-- SILENCI (micro equivocat o digital)" : "  <-- senyal OK")
+        + (r.device ? "  device=" + r.device : "")
+        + (r.text ? "  whisper=«" + r.text.slice(0, 30) + "»" : ""));
+    })
+    .catch(function (e) { add("diag", "ERROR " + e.name + " (" + e.message + ")"); })
+    .then(function () { return lines; });
+  }
+
   /* ---------------- TTS ---------------- */
   let _lastQuestion = "";
   let _voicesWarned = false;
@@ -180,9 +308,13 @@
     let done = false;
     let resolveFn = null;
     async function capture() {
-      // honor the user's microphone choice (settings drawer); empty => system default
-      const audio = cfg.micId ? { deviceId: { exact: cfg.micId } } : true;
-      stream = await navigator.mediaDevices.getUserMedia({ audio: audio });
+      // honor the user's microphone choice (settings drawer); heal a stale one
+      stream = await openMicStream();
+      noteLiveStream(stream);
+      // a taken/unplugged mic kills the track mid-recording: never die silently
+      stream.getAudioTracks().forEach(function (t) {
+        t.onended = function () { if (!done) reportError("err_mic_lost"); };
+      });
       const mime = pickMime();
       const opts = mime.type ? { type: mime.type } : {};
       recorder = new MediaRecorder(stream, opts);
@@ -226,7 +358,11 @@
     return {
       start: async function () {
         try { await capture(); if (recorder) recorder.start(); }
-        catch (e) { if (resolveFn) resolveFn(""); }
+        catch (e) {
+          // surfaced: a mic that cannot open must say why (busy/missing/denied)
+          reportError(micErrorKey(e), (e && e.name) || "");
+          if (resolveFn) resolveFn("");
+        }
       },
       stop: function () {
         return new Promise(function (res) {
@@ -234,6 +370,7 @@
           resolveFn = function (t) { res(t || ""); };
           if (recorder && recorder.state !== "inactive") recorder.stop();
           if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+          clearLiveStream();
           setTimeout(function () { if (!done) { done = true; res(""); } }, 8000);
         });
       }
@@ -347,16 +484,25 @@
   }
 
   /* Mic test: record ~3 s from the chosen device, report level (+ what
-     Whisper hears when configured). Used by the ⚙️ "Probar micro" button. */
-  function testMic() {
+     Whisper hears when configured). `onStart` fires once capture is live
+     (used by the drawer to tag the "en uso" mic while testing). Rejects
+     with the original error; app.js surfaces it via Speech.micErrorText. */
+  function testMic(onStart) {
     const cfg = window.Config.get();
-    const audio = cfg.micId ? { deviceId: { exact: cfg.micId } } : true;
-    return navigator.mediaDevices.getUserMedia({ audio: audio }).then(function (stream) {
+    let captureEnded = false; // intentional stop vs external loss (onended)
+    let _lastTestDevice = "";
+    return openMicStream().then(function (stream) {
+      try { _lastTestDevice = (stream.getAudioTracks()[0] || {}).label || ""; } catch (e) {}
+      noteLiveStream(stream);
+      stream.getAudioTracks().forEach(function (t) {
+        t.onended = function () { if (!captureEnded) { clearLiveStream(); reportError("err_mic_lost"); } };
+      });
+      if (typeof onStart === "function") { try { onStart(); } catch (e) {} }
       return new Promise(function (resolve) {
         const mime = pickMime();
         const chunks = [];
         let settled = false;
-        function finish(r) { if (!settled) { settled = true; stream.getTracks().forEach(function (t) { t.stop(); }); resolve(r); } }
+        function finish(r) { if (!settled) { settled = true; captureEnded = true; r.device = r.device || _lastTestDevice; clearLiveStream(); stream.getTracks().forEach(function (t) { t.stop(); }); resolve(r); } }
         const recorder = new MediaRecorder(stream, mime.type ? { type: mime.type } : {});
         recorder.ondataavailable = function (e) { if (e.data && e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = async function () {
@@ -392,6 +538,9 @@
     canTranscribe: canTranscribe,
     whisperConfigured: whisperConfigured,
     testMic: testMic,
+    activeMicId: function () { return _liveDeviceId; },
+    micErrorText: micErrorText,
+    micDiag: micDiag,
     LANG: LANG
   };
 })();

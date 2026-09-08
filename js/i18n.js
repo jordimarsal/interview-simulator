@@ -203,6 +203,9 @@
     },
     s_mic_input: { es: "Micrófono de entrada", en: "Input microphone" },
     s_mic_default: { es: "Micrófono por defecto (sistema)", en: "System default microphone" },
+    s_mic_default_name: { es: "Micrófono por defecto (sistema) — {name}", en: "System default microphone — {name}" },
+    s_mic_default_tag: { es: "por defecto", en: "default" },
+    s_mic_in_use: { es: "en uso", en: "in use" },
     s_mic_generic: { es: "Micrófono", en: "Microphone" },
     s_mic_hint: {
       es: "Se aplica a la grabación con Whisper. La «voz del navegador» usa siempre el micrófono por defecto del sistema.",
@@ -218,6 +221,7 @@
     },
 
     s_mic_test: { es: "Probar micro", en: "Test mic" },
+    s_mic_diag: { es: "Diagnóstico", en: "Diagnose" },
     s_mic_test_rec: { es: "Grabando 3 s… habla ahora", en: "Recording 3 s… speak now" },
     s_mic_test_ok: { es: "Micrófono OK", en: "Mic OK" },
     s_mic_test_low: {
@@ -236,6 +240,26 @@
     err_no_mic: {
       es: "No se pudo acceder al micrófono. Permite el acceso e inténtalo de nuevo.",
       en: "Microphone access was denied. Allow microphone access and try again."
+    },
+    err_mic_busy: {
+      es: "El micrófono está en uso por otra aplicación. Ciérrala e inténtalo de nuevo.",
+      en: "The microphone is in use by another application. Close it and try again."
+    },
+    err_mic_missing: {
+      es: "No se ha detectado ningún micrófono. Conecta uno e inténtalo de nuevo.",
+      en: "No microphone found. Connect one and try again."
+    },
+    err_mic_stale: {
+      es: "El micrófono guardado ya no existe (el sistema cambió los dispositivos). Se usará el micrófono por defecto.",
+      en: "The saved microphone no longer exists (the system changed devices). Falling back to the system default."
+    },
+    err_mic_monitor: {
+      es: "El micrófono guardado era un «monitor» de salida del sistema, no un micrófono: grababa silencio. Se usará el micrófono por defecto.",
+      en: "The saved microphone was a system output \"monitor\", not a mic: it recorded silence. Falling back to the system default."
+    },
+    err_mic_lost: {
+      es: "La captura del micrófono se ha interrumpido: otra app lo ha tomado o se ha desconectado.",
+      en: "Microphone capture was interrupted: another app took it or it was unplugged."
     },
     err_stt_convert: {
       es: "No se pudo convertir el audio a WAV; se envía el formato original.",
