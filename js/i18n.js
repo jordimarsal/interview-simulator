@@ -289,6 +289,17 @@
       es: "— sin audio detectado —",
       en: "— no audio detected —"
     },
+    review_loading: {
+      es: "Analizando tu respuesta…",
+      en: "Analyzing your answer…"
+    },
+    review_error: {
+      es: "No se pudo analizar la respuesta.",
+      en: "Couldn't analyze the answer."
+    },
+    cat_grammar: { es: "Gramática", en: "Grammar" },
+    cat_vocab: { es: "Vocabulario", en: "Vocabulary" },
+    cat_concept: { es: "Concepto", en: "Concept" },
     coach_title: { es: "Coach", en: "Coach" },
     coach_waiting: {
       es: "Cuando el entrevistador haga una pregunta, aquí verás dos posibles respuestas.",

@@ -30,6 +30,11 @@
     en: "You are the candidate's coach during a technical interview. ALWAYS WRITE IN ENGLISH, even if the profile is in another language. Return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"facts\": [\"...\"], \"cv\": \"...\", \"general\": \"...\"}. STEP 1 — \"facts\": the 1-2 facts from the CANDIDATE PROFILE strictly relevant to the question (array of 1-2 short phrases taken from the profile; nothing else). STEP 2 — \"cv\": answer EXACTLY the question developing ONLY those facts (adding other profile data is forbidden); if the profile lacks relevant facts, answer generally within their real experience. WRONG (too broad): mixing the OpenAPI generator + CLI tools + reactive programming in one answer. RIGHT: one single decision or system, how you did it, and its impact. NEVER invent numbers or results: no metrics, qualitative impact only; the % character is FORBIDDEN. Max 3-4 sentences (~60-90 words), first person, natural tone. \"general\": an alternative model answer to the question, strong and personal-data-free, same focus and length rules."
   };
 
+  const REVIEW_SYSTEM = {
+    es: "Eres el ayudante del entrevistador en una entrevista técnica: tomas notas de la respuesta del candidato mientras habla. Analiza la RESPUESTA respecto a la PREGUNTA hecha y devuelve ÚNICAMENTE un objeto JSON válido (sin código, sin markdown) con este esquema exacto: {\"errors\": [{\"cat\": \"gramatica|vocabulario|concepto\", \"text\": \"...\"}], \"good\": [\"...\"]}. Reglas: máximo 3 errores y 2 aciertos; cada entrada es UNA frase corta (máx ~15 palabras), concreta y accionable, citando la palabra o idea afectada cuando aplique. Categorias (usa SIEMPRE estos tokens): gramatica = concordancia, tiempos verbales, estructura de frase; vocabulario = imprecisión léxica, farcitos, repeticiones; concepto = desvío de la pregunta o error técnico conceptual. Si no hay errores reales, errors queda vacío — nunca inventes fallos. Si todo va bien, incluye al menos un acierto. Escribe SIEMPRE EN CASTELLANO.",
+    en: "You are the interviewer's assistant during a technical interview: you take notes on the candidate's answer as they speak. Analyze the ANSWER against the QUESTION asked and return ONLY a valid JSON object (no code fences, no prose) with this exact schema: {\"errors\": [{\"cat\": \"gramatica|vocabulario|concepto\", \"text\": \"...\"}], \"good\": [\"...\"]}. Rules: max 3 errors and 2 good points; each entry is ONE short sentence (max ~15 words), concrete and actionable, quoting the affected word or idea where it applies. Categories (ALWAYS use these tokens): gramatica = agreement, verb tenses, sentence structure; vocabulario = imprecise wording, fillers, repetitions; concepto = drifting from the question or conceptual/technical mistake. If there are no real errors, leave errors empty — never invent faults. If all goes well include at least one good point. ALWAYS WRITE IN ENGLISH."
+  };
+
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
   /* ---------------- builtin heuristic scorer ---------------- */
@@ -131,7 +136,77 @@
     parsed.builtin = false;
     return parsed;
   }
+  async function reviewRemote(question, answer, lang) {
+    const sys = REVIEW_SYSTEM[lang] || REVIEW_SYSTEM.es;
+    const raw = await chat({
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: "Pregunta: " + question + "\nRespuesta del candidato: " + answer }
+      ],
+      response_format: { type: "json_object" }, max_tokens: 400, temperature: 0.3
+    });
+    let parsed = null;
+    try {
+      const m = raw.match(/\{[\s\S]*\}/);
+      if (m) parsed = JSON.parse(m[0]);
+    } catch (e) {}
+    if (!parsed || !Array.isArray(parsed.errors) || !Array.isArray(parsed.good)) throw new Error("bad review JSON");
+    return normalizeReview(parsed);
+  }
+  /* Both modes feed the same shape to the UI: {errors:[{cat,text}], good:[text]} */
+  function normalizeReview(p) {
+    const CATS = ["gramatica", "vocabulario", "concepto"];
+    const errors = (p.errors || []).filter(function (e) { return e && typeof e.text === "string" && e.text.trim(); })
+      .slice(0, 3).map(function (e) {
+        const cat = CATS.indexOf(e.cat) !== -1 ? e.cat : "concepto";
+        return { cat: cat, text: strip(String(e.text)).trim() };
+      });
+    const good = (p.good || []).filter(function (g) { return typeof g === "string" && g.trim(); })
+      .slice(0, 2).map(function (g) { return strip(g).trim(); });
+    return { errors: errors, good: good };
+  }
   function strip(s) { return (s || "").replace(/^["'\s\u201C\u201E]+|["'\s\u201D\u2019]+$/g, "").trim(); }
+
+  /* ---------------- builtin review heuristics ----------------
+     Offline stand-in for the LLM reviewer: only flags what is measurable
+     from the raw text (length, fillers, repetition), never invented faults. */
+  function reviewBuiltin(answer) {
+    const lang = window.I18N ? window.I18N.getLocale() : "es";
+    const L = function (o) { return o[lang] || o.es || ""; };
+    const clean = String(answer || "").trim();
+    const words = clean.split(/\s+/).filter(Boolean);
+    const wc = words.length;
+    const sentences = clean.split(/[.!?]+/).map(function (s) { return s.trim(); }).filter(Boolean).length || 1;
+    const unique = new Set(words.map(function (w) { return w.toLowerCase().replace(/[^a-záéíóúñü0-9]/gi, ""); })).size;
+    const diversity = wc ? unique / wc : 0;
+
+    const errors = [];
+    const good = [];
+    const fillerRe = /\b(ehh?|mmm+|um|uh|like|you know|i mean|o sea)\b/gi;
+    const fillers = clean.match(fillerRe);
+    if (fillers && fillers.length >= 2) {
+      errors.push({ cat: "vocabulario", text: L({ es: "Farcitos repetidos («" + fillers[0].toLowerCase() + "…») — suenan a duda.", en: "Repeated fillers (“" + fillers[0].toLowerCase() + "…”) — sound like hesitation." }) });
+    }
+    const counts = {};
+    words.forEach(function (w) {
+      const k = w.replace(/[^a-záéíóúñü0-9]/gi, "").toLowerCase();
+      if (k.length >= 5) counts[k] = (counts[k] || 0) + 1;
+    });
+    let repWord = "", repN = 0;
+    for (const k in counts) { if (counts[k] > repN) { repN = counts[k]; repWord = k; } }
+    if (repWord && repN >= 4) {
+      errors.push({ cat: "vocabulario", text: L({ es: "«" + repWord + "» aparece " + repN + " veces — busca sinónimos.", en: "“" + repWord + "” appears " + repN + " times — vary the wording." }) });
+    }
+    if (wc < 8) {
+      errors.push({ cat: "concepto", text: L({ es: "Respuesta muy corta para desarrollar el concepto de la pregunta.", en: "Too short to develop the concept asked." }) });
+    }
+    if (wc >= 25) good.push(L({ es: "Desarrolla la idea con extensión suficiente.", en: "Develops the idea with enough depth." }));
+    if (diversity > 0.6) good.push(L({ es: "Vocabulario variado y técnico.", en: "Varied, technical vocabulary." }));
+    if (sentences >= 3) good.push(L({ es: "Estructura clara en varias frases.", en: "Clear multi-sentence structure." }));
+    if (!errors.length && !good.length) good.push(L({ es: "Respuesta directa al grano.", en: "Gets straight to the point." }));
+
+    return { errors: errors.slice(0, 3), good: good.slice(0, 2) };
+  }
 
   /* ---------------- builtin driver ---------------- */
   function buildPath() {
@@ -185,6 +260,19 @@
         try { return await evaluateRemote(question, answer, lang); } catch (e) {}
       }
       return evaluateBuiltin(answer);
+    },
+
+    /* Interviewer's assistant notes for one answer: tagged error bullets +
+       good points. Remote asks the LLM; builtin/heuristic fallback keeps the
+       demo useful offline and is also the degradation path when remote fails. */
+    reviewAnswer: async function (question, answer) {
+      const text = String(answer || "").trim();
+      if (!text) return null;
+      const lang = window.I18N ? window.I18N.getLocale() : "es";
+      if (this.mode === "remote") {
+        try { return await reviewRemote(question, text, lang); } catch (e) {}
+      }
+      return reviewBuiltin(text);
     },
 
     /* Coach: two candidate answers for the current question — one grounded

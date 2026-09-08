@@ -99,8 +99,7 @@
       li.querySelector('[data-act="send"]').addEventListener("click", function () {
         const val = textEl.value.trim();
         if (!val) return;
-        lastUserLi = null; // manual card is consumed
-        finalizeAnswer(val);
+        finalizeAnswer(val); // afterAnswer consumes lastUserLi (review needs the card)
       });
     } else {
       const recBtn = li.querySelector('[data-act="rerecord"]');
@@ -198,21 +197,76 @@
   function afterAnswer(text) {
     text = text || "";
     setMic(false);
+    const cardLi = lastUserLi;
     // paint the final transcript into the user's card (whisper path has no live onTick)
-    if (lastUserLi) {
-      const t = lastUserLi.querySelector("[data-transcript]");
+    if (cardLi) {
+      const t = cardLi.querySelector("[data-transcript]");
       if (t) t.textContent = text || T("s_answer_empty");
     }
     history.push({ role: "user", text: text });
     lastUserLi = null;
     state = S.THINKING; setStatus(); setPrompt(T("prompt_thinking"));
     if (orb) orb.setMode("thinking");
+    fireReview(cardLi, currentQ, text);
     window.Agent.evaluateAnswer(currentQ, text).then(done).catch(done);
     function done(result) {
       answers.push({ q: currentQ, a: text, result: result });
       updateReel();
       advance();
     }
+  }
+
+  /* Interviewer's assistant notes: bullets of errors/good points rendered
+     inside the candidate's own card. Runs in parallel with evaluateAnswer —
+     it must never block the next turn. */
+  const REVIEW_CATS = { gramatica: "cat_grammar", vocabulario: "cat_vocab", concepto: "cat_concept" };
+  function fireReview(li, question, answerText) {
+    if (!li || !answerText || !window.Agent || !window.Agent.reviewAnswer) return;
+    const host = li.querySelector("[data-transcript]");
+    if (!host) return;
+    const box = document.createElement("div");
+    box.className = "review";
+    const loading = document.createElement("p");
+    loading.className = "review__loading";
+    loading.textContent = T("review_loading");
+    box.appendChild(loading);
+    host.parentNode.insertBefore(box, host.nextSibling);
+    window.Agent.reviewAnswer(question, answerText).then(function (r) {
+      if (!li.isConnected) return; // card removed by re-record: drop silently
+      renderReview(box, r);
+    }).catch(function () {
+      if (!li.isConnected) return;
+      box.innerHTML = "";
+      const p = document.createElement("p");
+      p.className = "review__error";
+      p.textContent = T("review_error");
+      box.appendChild(p);
+    });
+  }
+  function renderReview(box, r) {
+    box.innerHTML = "";
+    if (!r) return;
+    const ul = document.createElement("ul");
+    (r.errors || []).forEach(function (e) {
+      const item = document.createElement("li");
+      item.className = "rv rv--error";
+      const tag = document.createElement("span");
+      tag.className = "rv__cat";
+      tag.textContent = T(REVIEW_CATS[e.cat] || "cat_concept");
+      const span = document.createElement("span");
+      span.textContent = e.text;
+      item.appendChild(tag); item.appendChild(span);
+      ul.appendChild(item);
+    });
+    (r.good || []).forEach(function (g) {
+      const item = document.createElement("li");
+      item.className = "rv rv--good";
+      const span = document.createElement("span");
+      span.textContent = g;
+      item.appendChild(span);
+      ul.appendChild(item);
+    });
+    if (ul.children.length) box.appendChild(ul);
   }
 
   function advance() { if (answers.length >= 6) finishSession(); else poseQuestion(); }

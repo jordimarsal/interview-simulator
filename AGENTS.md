@@ -22,13 +22,15 @@ js/speech.js        TTS (Piper :8082 | SpeechSynthesis) + STT (Web Speech | Whis
                     via MediaRecorder→WAV) + testMic(onStart) i test de veu;
                     activeMicId() exposa el micro capturant ara mateix
 js/orb.js           Visualització canvas de l'orbe (estats idle/agent/listening/thinking)
-js/agent.js         Entrevistador + Coach + Avaluador: mode 'builtin' (heurístic)
-                    | 'remote' (llama-server). chat(opts) és el punt únic LLM
+js/agent.js         Entrevistador + Coach + Avaluador + Revisor de respostes:
+                    mode 'builtin' (heurístic) | 'remote' (llama-server).
+                    chat(opts) és el punt únic LLM
 js/cv.js            Corpus bilingüe VERBATIM_CV = {es, en} (fonts: CV Python Senior
                     2026 .docx + docs/CV_26.md) — el Coach només pot basar la
                     resposta "cv" en aquestes dades; res inventat
 js/app.js           Orquestrador/màquina d'estats: IDLE→ASKING→RECORDING→THINKING→…
-                    + panells Coach i Temes + botons de prova de micro i veu
+                    + panells Coach i Temes + vinyetes de revisió sota cada
+                    resposta + botons de prova de micro i veu
 js/whisper-ui.js    Targeta de detecció del servidor Whisper + copia del comandament
 js/agent-ui.js      Targeta de detecció del servidor de l'agent + nom del model carregat
 js/reveal.js        Animacions d'entrada
@@ -43,6 +45,7 @@ Servidor de veu local (fora del repo): `~/ia/piper/server.py` + llançador `~/ia
 - **`i18n.STRINGS` està indexat per CLAU, no per idioma**: `STRINGS["nav_start"].es` — mai `STRINGS["es"]`. Aquesta confusió de forma ja va trencar el selector d'idioma una vegada.
 - **`agent.js chat(opts)`** rep UN sol objecte `{messages, max_tokens, temperature, response_format}`. El body ha d'incloure `messages` sempre (un 400 silenciat es converteix en `""` → bombolla buida). Si una pregunta arriba buida, cal llançar error perquè `poseQuestion` mostri el fallback.
 - **Coach (`Agent.suggestAnswers(question, lang, history)`)**: per cada pregunta retorna `{cv, general}` (JSON amb `facts` primer: 1-2 dades del perfil rellevants, després la resposta només desenvolupa aquests fets). Rep l'històric recent per resoldre anàfores («those challenges»). La resposta `cv` ha de fonamentar-se ESTRICTAMENT en `window.VERBATIM_CV[lang]` (js/cv.js, corpus bilingüe) — res inventat, **cap mètrica ni `%`**: els models s'ancoren a «reduced X by 40%» i el corpus no té xifres; `stripPercentSentences()` ho garanteix mecànicament. En mode builtin el panell mostra un hint, no respostes falses.
+- **Revisor de respostes (`Agent.reviewAnswer(question, answer)`)**: vinyetes d'errors/encerts sota cada resposta del candidat (dins la seva targeta, via `fireReview` a app.js). Retorna `{errors:[{cat,text}], good:[text]}` amb `cat ∈ {gramatica, vocabulario, concepto}`. Remot crida el LLM; builtin/heurístic és el fallback offline I la degradació si remot falla — mai llança, sempre resol. Corre en paral·lel amb `evaluateAnswer`: NO pot bloquejar el torn següent ni retardar-lo. Si la targeta es elimina (re-gravar), el resultat es descarta silenciosament.
 - **Temes**: `Questions.setTopics()` filtra el banc per al selector esquerre (builtin) i `topicLabels(lang)` injecta «TEMAS PERMITIDOS» al prompt remot. Una pregunta sense tema vàlid mai ha de bloquejar la sessió (degradació: repeteix dins del tema, després tot el banc).
 - **`app.js` sobreescriu `fields.load/save`** en cridar `Config.initDrawer(...)`: la ruta viva del drawer és `loadSettingsIntoDrawer()` i el `save` inline d'app.js. El que es cablegi a `config.js wireDrawer()` és codi mort si app.js no l'usa.
 - **Permisos de micro**: els labels de `enumerateDevices()` arriben només després d'un `getUserMedia`. El desbloqueig es fa NOMÉS en obrir ⚙️ (`populateMics(sel, true)`), mai en carregar la pàgina. El dropdown resol el nom real del micro per defecte via el pseudo-dispositiu `deviceId === "default"` (només Chrome; Firefox degrada sense nom) i etiqueta `· por defecto` / `· en uso` (via `Speech.activeMicId()`). Els «Monitor of …» (loopbacks de sortida PipeWire que graven silenci) es FILTREN del desplegable i un `micId` que apunti a un monitor es cura cap al default (`isMonitorSource`).
