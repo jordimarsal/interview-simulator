@@ -324,6 +324,10 @@
       es: "El entrevistador preguntará solo por los temas marcados. Con todo activo, la entrevista alterna lo personal, lo no técnico y lo técnico.",
       en: "The interviewer will only ask about the checked topics. With everything on, the interview mixes personal, non-technical and technical."
     },
+    topics_intro_first: {
+      es: "Empezar siempre con la presentación",
+      en: "Always start with the self-intro"
+    },
     s_tts_test: { es: "Probar voz", en: "Test voice" },
     tts_test_phrase: {
       es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",

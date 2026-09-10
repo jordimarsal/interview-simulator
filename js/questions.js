@@ -141,6 +141,16 @@
   }
   function inScope(q) { return !activeTopics || activeTopics.indexOf(TOPIC_OF[q.id]) >= 0; }
 
+  /* "Start with the presentation" checkbox: forces the intro question as Q1,
+     but only while its topic ("personal") is still in scope. */
+  let introFirst = false;
+  function setIntroFirst(on) { introFirst = !!on; }
+  function introFirstQuestion() {
+    if (!introFirst) return null;
+    const intro = BANK.filter(function (q) { return q.id === "intro"; })[0];
+    return (intro && inScope(intro)) ? intro : null;
+  }
+
   const CLOSING = [
     { es: "Ahora eres tú quien pregunta: ¿tienes alguna pregunta sobre el equipo o la arquitectura?",
       en: "Now it's your turn: do you have any questions about the team or the architecture?" },
@@ -167,5 +177,6 @@
 
   window.Questions = { all: all, warmup: warmup, pick: pick, closing: closing,
                        setTopics: setTopics, getTopics: getTopics, topicLabels: topicLabels,
+                       setIntroFirst: setIntroFirst, introFirstQuestion: introFirstQuestion,
                        TOPICS: TOPICS };
 })();

@@ -466,6 +466,13 @@
       list.addEventListener("change", sync);
       sync();
     }
+    /* "Start with the presentation" checkbox (session-scoped, like topics). */
+    const introBox = $("intro-first");
+    if (introBox) {
+      introBox.addEventListener("change", function () {
+        window.Questions.setIntroFirst(introBox.checked);
+      });
+    }
     document.addEventListener("keydown", function (e) {
       if (e.code !== "Space" || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
       e.preventDefault(); onMicTap();

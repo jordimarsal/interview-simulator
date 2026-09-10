@@ -227,10 +227,18 @@
       this._path = buildPath();
       this._visited = new Set();
       this._index = 0;
+      this._introDone = false;
     },
 
     nextQuestion: async function (history) {
       const lang = window.I18N ? window.I18N.getLocale() : "es";
+      // "start with the presentation" checkbox: deterministic Q1 from the bank,
+      // before any remote call; _index untouched so the warmup step still runs next
+      if (!this._introDone) {
+        this._introDone = true;
+        const intro = window.Questions.introFirstQuestion && window.Questions.introFirstQuestion();
+        if (intro) { Agent._visited.add(intro.id); return lang === "en" ? intro.en : intro.es; }
+      }
       if (this.mode === "remote") {
         try { return await nextQuestionRemote(history, lang); }
         catch (e) { /* fall through to builtin */ }
