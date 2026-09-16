@@ -311,6 +311,15 @@
     },
     coach_cv: { es: "Basada en tu CV", en: "Based on your CV" },
     coach_general: { es: "Respuesta modelo", en: "Model answer" },
+    btn_save_answer: { es: "Guardar resposta", en: "Save answer" },
+    save_done: {
+      es: "Guardat a {file} (pregunta + resposta del Coach).",
+      en: "Saved to {file} (question + coach answers)."
+    },
+    save_saved_before: {
+      es: "Aquesta pregunta ja estava guardada.",
+      en: "This question was already saved."
+    },
     coach_demo_hint: {
       es: "El coach necesita el Agente entrevistador en modo Local (⚙️ → Agente entrevistador).",
       en: "The coach needs the interviewer agent in Local mode (⚙️ → Interviewer agent)."

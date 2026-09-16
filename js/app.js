@@ -138,38 +138,67 @@
     }).catch(function () { currentQ = T("room_lede"); addAgentCard(currentQ); renderSuggestions(currentQ); });
   }
 
-  /* Coach panel: two candidate answers per question (one from the CV). */
-  function renderSuggestions(question) {
-    const body = $("coach-body");
-    if (!body) return;
-    const mode = (window.Agent && window.Agent.mode) || "builtin";
-    if (mode !== "remote" || !question) {
-      body.innerHTML = '<p class="coach__note"></p>';
-      body.firstChild.textContent = T("coach_demo_hint");
-      return;
-    }
-    body.innerHTML = '<p class="coach__note coach__loading"></p>';
-    body.firstChild.textContent = T("coach_thinking");
-    window.Agent.suggestAnswers(question, L(), history).then(function (s) {
-      body.innerHTML = "";
-      [["coach_cv", s.cv], ["coach_general", s.general]].forEach(function (pair) {
-        const card = document.createElement("div");
-        card.className = "coach__card";
-        const lbl = document.createElement("div");
-        lbl.className = "coach__label";
-        lbl.textContent = T(pair[0]);
-        const txt = document.createElement("p");
-        txt.className = "coach__text";
-        txt.textContent = pair[1];
-        card.appendChild(lbl);
-        card.appendChild(txt);
-        body.appendChild(card);
-      });
-    }).catch(function () {
-      body.innerHTML = '<p class="coach__note"></p>';
-      body.firstChild.textContent = T("coach_error");
-    });
-  }
+   /* Coach panel: two candidate answers per question (one from the CV). */
+   function renderSuggestions(question) {
+     const body = $("coach-body");
+     if (!body) return;
+     const mode = (window.Agent && window.Agent.mode) || "builtin";
+     if (mode !== "remote" || !question) {
+       body.innerHTML = '<p class="coach__note"></p>';
+       body.firstChild.textContent = T("coach_demo_hint");
+       attachSave(question);
+       return;
+     }
+     body.innerHTML = '<p class="coach__note coach__loading"></p>';
+     body.firstChild.textContent = T("coach_thinking");
+     window.Agent.suggestAnswers(question, L(), history).then(function (s) {
+       body.innerHTML = "";
+       [["coach_cv", s.cv], ["coach_general", s.general]].forEach(function (pair) {
+         const card = document.createElement("div");
+         card.className = "coach__card";
+         const lbl = document.createElement("div");
+         lbl.className = "coach__label";
+         lbl.textContent = T(pair[0]);
+         const txt = document.createElement("p");
+         txt.className = "coach__text";
+         txt.textContent = pair[1];
+         card.appendChild(lbl);
+         card.appendChild(txt);
+         body.appendChild(card);
+       });
+       /* One Save control per turn: captures the interviewer's question + the
+          two coach answers into ENTREVISTA_{date}.md (append-only). */
+       attachSave(question, s.cv || "", s.general || "");
+     }).catch(function () {
+       body.innerHTML = '<p class="coach__note"></p>';
+       body.firstChild.textContent = T("coach_error");
+       attachSave(question);
+     });
+
+     /* Build the "Guardar" row under the coach suggestions. In remote mode it
+        records the question + both coach answers; offline it still saves the
+        interviewer's question so the export works from the demo path too. */
+     function attachSave(q, cvText, generalText) {
+       const row = document.createElement("div");
+       row.className = "coach__actions";
+       const btn = document.createElement("button");
+       btn.type = "button";
+       btn.className = "mini coach__save";
+       const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+       icon.setAttribute("viewBox", "0 0 24 24");
+       icon.innerHTML = '<use href="#i-save"/>';
+       btn.appendChild(icon);
+       btn.appendChild(document.createTextNode(" " + T("btn_save_answer")));
+       row.appendChild(btn);
+       body.appendChild(row);
+       btn.addEventListener("click", function () {
+         if (!window.Notes) return;
+         const isNew = window.Notes.saveTurn(currentQ, cvText || "", generalText || "");
+         if (isNew) { toast(T("save_done").replace("{file}", window.Notes.fileName())); }
+         else { toast(T("save_saved_before")); }
+       });
+     }
+   }
 
   function startAnswering() {
     if (state === S.RECORDING) return;

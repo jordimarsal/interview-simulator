@@ -197,6 +197,12 @@ Layout of the room                                                    */
 .coach__card { padding: 0.8rem 0.9rem; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); }
 .coach__label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.35rem; }
 .coach__text { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--ink-dim); }
+
+/* Coach: save control under the suggested answers */
+.coach__actions { display:flex; align-items:center; gap:0.4rem; margin-top:0.5rem; }
+.coach__save { display:inline-flex; align-items:center; gap:0.4ch; font-size:0.78rem; padding:0.45rem 0.75rem; border-radius:10px; color: var(--accent); border:1px solid rgba(246,195,90,0.4); background: var(--accent-soft); transition: all 0.25s; cursor:pointer; }
+.coach__save:hover { color:#1a1300; background:#f6d373; }
+.coach__save svg { width:0.9rem; height:0.9rem; }
 @media (prefers-reduced-motion: reduce) { .coach__loading { animation: none; } }
 
 @media (min-width: 1100px) {
