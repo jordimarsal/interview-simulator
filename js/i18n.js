@@ -185,8 +185,8 @@
       en: "Local OpenAI-compatible servers (/inference and /v1/chat/completions): whisper.cpp (port 8081) and llama-server (port 8080). Also works with any cloud provider."
     },
     s_whisper_hint: {
-      es: "Necessites un servidor whisper.cpp corrent (ej. ~/ia/run-whisper.sh) antes de transcribir. El model és ~/ia/ggml-small.bin; el endpoint és http://localhost:8081/inference.",
-      en: "You need a whisper.cpp server running (e.g. ~/ia/run-whisper.sh) before transcription. Model is ~/ia/ggml-small.bin; the endpoint is http://localhost:8081/inference."
+      es: "Necesitas un servidor whisper.cpp corriendo (ej. bash scripts/run-whisper.sh) antes de transcribir. El modelo es ~/.local/share/verbatim/models/ggml-small.bin; el endpoint es http://localhost:8081/inference.",
+      en: "You need a whisper.cpp server running (e.g. bash scripts/run-whisper.sh) before transcription. Model is ~/.local/share/verbatim/models/ggml-small.bin; the endpoint is http://localhost:8081/inference."
     },
     s_whisper_status_down: {
       es: "El servidor de Whisper no está corriendo. Ábrelo desde la terminal:",
@@ -197,6 +197,7 @@
       en: "Whisper server detected ✓ — you can transcribe now."
     },
     s_copy_launch: { es: "Copiar comando", en: "Copy command" },
+    s_copied: { es: "✓ Copiado", en: "✓ Copied" },
     s_start_hint: {
       es: "Una vez ejecutado, esta tarjeta pasa a detectar el servidor automáticamente.",
       en: "Once run, this card will auto-detect the server and you can close it."
@@ -229,8 +230,8 @@
       en: "Very low level: check the chosen mic or the system input volume."
     },
     s_tts_piper_hint: {
-      es: "Piper es una red neuronal local: arráncalo con ~/ia/run-piper.sh (puerto 8082). La voz del navegador usa las voces del sistema.",
-      en: "Piper is a local neural network: start it with ~/ia/run-piper.sh (port 8082). The browser voice uses system voices."
+      es: "Piper es una red neuronal local: arráncalo con bash scripts/run-piper.sh (puerto 8082). La voz del navegador usa las voces del sistema.",
+      en: "Piper is a local neural network: start it with bash scripts/run-piper.sh (port 8082). The browser voice uses system voices."
     },
     err_tts_piper: {
       es: "No se pudo usar Piper; uso la voz del navegador.",

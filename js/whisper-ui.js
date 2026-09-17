@@ -9,9 +9,21 @@
 (function () {
   "use strict";
 
-  const CMD = "~/ia/run-whisper.sh";
   const HEALTH = "http://localhost:8081/";      // whisper.cpp serves its demo UI here
   const TICK = 2500;
+
+  /* Launch command: absolute path of the in-repo script when the page is
+     opened from file:// (interview.html lives at the repo root), so the
+     pasted command works from any terminal. Relative otherwise. */
+  function launchCmd(script) {
+    try {
+      if (location.protocol === "file:") {
+        const dir = decodeURIComponent(location.pathname.replace(/\/[^/]*$/, ""));
+        return "bash " + dir + "/scripts/" + script;
+      }
+    } catch (e) {}
+    return "bash scripts/" + script;
+  }
 
   function T(key) {
     const L = (window.I18N && window.I18N.getLocale ? window.I18N.getLocale() : "es") || "es";
@@ -42,8 +54,9 @@
 
   /* Copy the launch command with a short visual confirmation. */
   function copyCommand() {
+    const CMD = launchCmd("run-whisper.sh");
     const btn = document.getElementById("whisper-copy");
-    const done = () => { if (btn) { btn.querySelector(".wl-label").textContent = "✓ Copiat"; setTimeout(function(){ btn.querySelector(".wl-label").textContent = T("s_copy_launch"); }, 1600); } };
+    const done = () => { if (btn) { btn.querySelector(".wl-label").textContent = T("s_copied"); setTimeout(function(){ btn.querySelector(".wl-label").textContent = T("s_copy_launch"); }, 1600); } };
     const run = function () { navigator.clipboard.writeText(CMD).then(done, function () { fallback(); }); };
     function fallback() {
       const ta = document.createElement("textarea"); ta.value = CMD; document.body.appendChild(ta);
@@ -53,6 +66,8 @@
   }
 
   function start() {
+    const code = document.getElementById("whisper-cmd");
+    if (code) code.textContent = launchCmd("run-whisper.sh");
     update();
     setInterval(update, TICK);
     const sel = document.getElementById("cfg-stt");

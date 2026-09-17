@@ -149,7 +149,7 @@
          <div class="whisper-launch hidden" id="whisper-launch-card">
            <p class="wl-status" id="whisper-status-line" data-i18n="s_whisper_status_down"></p>
            <div class="wl-code row">
-             <code id="whisper-cmd">~/ia/run-whisper.sh</code>
+              <code id="whisper-cmd">bash scripts/run-whisper.sh</code>
              <button type="button" class="mini whisper-copy-btn" id="whisper-copy" title="Copiar comando">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
                <span class="wl-label"></span>
@@ -170,7 +170,7 @@
         <label for="cfg-tts-engine" data-i18n="s_tts_engine">Voz del entrevistador (TTS)</label>
         <select id="cfg-tts-engine">
           <option value="browser">Voz del navegador</option>
-          <option value="piper">Piper — neuronal local (~/ia/run-piper.sh)</option>
+          <option value="piper">Piper — neuronal local (scripts/run-piper.sh)</option>
         </select>
         <input type="text" id="cfg-piper" placeholder="http://localhost:8082/tts" style="margin-top:0.5rem;" />
         <select id="cfg-tts" class="browser-voice-only" style="margin-top:0.5rem;"></select>
@@ -189,7 +189,7 @@
         <div class="launch-card hidden" id="agent-launch-card">
           <p class="wl-status" id="agent-status-line" data-i18n="s_agent_status_down"></p>
           <div class="wl-code row">
-            <code id="agent-cmd">~/ia/run-agent.sh</code>
+            <code id="agent-cmd">bash scripts/run-agent.sh</code>
             <button type="button" class="mini whisper-copy-btn" id="agent-copy" title="Copiar comando">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
               <span class="wl-label"></span>

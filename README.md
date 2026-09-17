@@ -20,31 +20,73 @@ Abre `index.html` → pulsa **«Empezar entrevista»**. Elige idioma arriba a la
 Funciona ya: el entrevistador interno + la voz del navegador. Ideal para probar UX y contenido.
 
 ### 2. Modo local (Whisper + LLM reales)
-Ejecuta dos servidores locales (puertos distintos) y apunta la app a ellos desde **⚙️ Configuración**:
+
+#### Requisitos
+
+| Requisito | Detalle |
+|---|---|
+| Sistema | Linux x86_64 (probado en Ubuntu 24.04). En macOS/Windows el modo demo funciona igual, pero `setup.sh` no puede instalar Piper (binario solo Linux) |
+| Espacio en disco | ~10 GB (modelos + binarios compilados) |
+| Compilación | `git`, `curl`, `cmake`, `build-essential` (el instalador los detecta y ofrece instalarlos) |
+| GPU | Opcional: con NVIDIA compila llama.cpp con CUDA (entrevistador mucho más rápido); sin GPU todo va en CPU |
+| Python 3 | Para el servidor de Piper (solo librería estándar, sin `pip install`) |
+| Navegador | Chrome/Edge/Firefox recientes; doble clic en `index.html`, sin servidor web |
+
+#### Instalación (una vez)
 
 ```bash
-# LLM (entrevistador) — llama.cpp, en GPU, puerto 8080
-~/ia/run-agent.sh
-
-# Transcripción (Whisper) — CPU, puerto 8081 (no compite por la VRAM con el LLM)
-~/ia/run-whisper.sh
-
-# Voz neuronal (Piper) — opcional, puerto 8082
-~/ia/run-piper.sh
+git clone <este-repo>
+cd interview-simulator
+bash scripts/setup.sh
 ```
 
-Los dos lanzadores son **idempotentes**: si el servidor ya está corriendo, lo detectan y simplemente siguen su log (`Ctrl+C` para salir del log sin parar el servidor).
+El instalador es **idempotente** (puedes re-ejecutarlo) y descarga/compila todo en `~/.local/share/verbatim` (configurable con `VERBATIM_AI_DIR`):
 
-La app ya viene apuntando a los puertos por defecto:
+1. Clona y compila **llama.cpp** → `llama-server` (con CUDA si detecta GPU NVIDIA; si no, CPU)
+2. Clona y compila **whisper.cpp** → `whisper-server` (CPU, así no compite por la VRAM con el LLM)
+3. Descarga el modelo del agente **Qwen3-VL-8B-Instruct-1M-Q6_K.gguf** (~6,8 GB, Hugging Face)
+4. Descarga el modelo de transcripción **ggml-small.bin** (~0,5 GB, whisper.cpp)
+5. Descarga el binario de **Piper TTS** y dos voces: `daniela-high` (es) y `lessac-medium` (en)
+
+#### Arrancar los servidores
+
+```bash
+# LLM (entrevistador) — puerto 8080
+bash scripts/run-agent.sh
+
+# Transcripción (Whisper) — puerto 8081
+bash scripts/run-whisper.sh
+
+# Voz neuronal (Piper) — opcional, puerto 8082
+bash scripts/run-piper.sh
+```
+
+Los tres lanzadores son **idempotentes**: si el servidor ya está corriendo, lo detectan y simplemente siguen su log (`Ctrl+C` para salir del log sin parar el servidor). La app ya viene apuntando a los puertos por defecto:
 - Endpoint Whisper: `http://localhost:8081/inference`  (POST multipart `file` → `{"text":"…"}`)
 - Agente LLM: `http://localhost:8080/v1/chat/completions`
+- Piper TTS: `http://localhost:8082/tts`
 
-Activa **Whisper** en ⚙️ → «Motor de transcripción» y el **Agente entrevistador** en «Local». Para la voz neuronal, elige **Piper** en «Voz del entrevistador». Desde ⚙️ puedes **probar el micro** (graba 3 s, te dice el nivel y qué entiende Whisper) y **probar la voz**.
+Activa **Whisper** en ⚙️ → «Motor de transcripción» y el **Agente entrevistador** en «Local». Para la voz neuronal, elige **Piper** en «Voz del entrevistador». Desde ⚙️ puedes **probar el micro** (graba 3 s, te dice el nivel y qué entiende Whisper) y **probar la voz**. Las tarjetas de estado detectan los servidores solas y ofrecen un botón «Copiar comando» con la ruta real de cada lanzador.
 
-> Modelo recomendado para el agente: `~/ia/llama/models/Qwen3-VL-8B-Instruct-1M-Q6_K.gguf` (instruct-tuned, ~5 GB, cabe entera en una GPU; contexto de 1 M). Arráncalo con `~/ia/run-agent.sh` — verificado: turno de pregunta en ~0,3 s en GPU. Para transcripción usa el modelo pequeño `~/ia/ggml-small.bin` con whisper.cpp; si prefieres transcripción sin servidor, activa **«Voz del navegador»** en Configuración (Chrome/Edge).
+#### Variables de entorno
+
+Todo es overridable, por si ya tienes tus propios binarios/modelos:
+
+| Variable | Defecto | Qué controla |
+|---|---|---|
+| `VERBATIM_AI_DIR` | `~/.local/share/verbatim` | Directorio base de binarios, modelos, voces y logs |
+| `LLAMA_SERVER_BIN` | `$VERBATIM_AI_DIR/llama.cpp/build/bin/llama-server` | Binario de llama-server |
+| `AGENT_MODEL` | `$VERBATIM_AI_DIR/models/Qwen3-VL-8B-Instruct-1M-Q6_K.gguf` | Modelo del entrevistador (cualquier GGUF instruct) |
+| `AGENT_PORT` | `8080` | Puerto del agente |
+| `WHISPER_SERVER_BIN` | `$VERBATIM_AI_DIR/whisper.cpp/build/bin/whisper-server` | Binario de whisper-server |
+| `WHISPER_MODEL` | `$VERBATIM_AI_DIR/models/ggml-small.bin` | Modelo whisper.cpp (también valen `small`, `base`… según VRAM/CPU) |
+| `WHISPER_PORT` | `8081` | Puerto de Whisper |
+| `PIPER_BIN` / `PIPER_VOICES_DIR` / `PIPER_PORT` | bajo `VERBATIM_AI_DIR` / `8082` | Instalación de Piper |
+
+> Modelo recomendado para el agente: `Qwen3-VL-8B-Instruct-1M-Q6_K.gguf` (instruct-tuned, ~6,8 GB, cabe entera en una GPU moderna; contexto de 1 M). Verificado: turno de pregunta en ~0,3 s en GPU. En CPU tarda más: usa un modelo más pequeño (p. ej. un Qwen3 4B en Q4) con `AGENT_MODEL=…`. Para transcripción, `ggml-small.bin` es un buen equilibrio velocidad/calidad en CPU; si prefieres transcripción sin servidor, activa **«Voz del navegador»** en Configuración (Chrome/Edge).
 
 #### Liberar VRAM: desactivar Ollama
-Esta máquina tiene `ollama.service` **habilitado por defecto**: se arranca solo en cada boot y retiene ~2 GB de VRAM en la GPU 0 aunque no lo uses. Para pararlo ahora y evitar que vuelva a arrancar:
+Si tienes `ollama.service` habilitado, se arranca solo en cada boot y retiene ~2 GB de VRAM en la GPU aunque no lo uses. Para pararlo ahora y evitar que vuelva a arrancar:
 
 ```bash
 sudo systemctl disable --now ollama
@@ -67,6 +109,13 @@ interview-simulator/
 │     · whisper-ui.js detección del servidor Whisper + copia del comando
 │     · agent-ui.js   detección del servidor del agente + modelo cargado
 │     · reveal.js     animaciones de entrada
+├── scripts/
+│     · setup.sh       instalador único (compila + descarga todo, idempotente)
+│     · run-agent.sh   lanzador del LLM        → :8080
+│     · run-whisper.sh lanzador de Whisper     → :8081
+│     · run-piper.sh   lanzador de Piper TTS   → :8082
+│     · common.sh      entorno compartido (VERBATIM_AI_DIR, helpers)
+│     · piper/server.py  servidor TTS de Piper (solo librería estándar)
 └── README.md
 ```
 
@@ -75,7 +124,7 @@ interview-simulator/
 - **Autocontenido**: HTML/CSS/JS locales, sin CDN ni build. Se abre desde `file://` sin instalar nada.
 - **Tipografía**: se usan stacks del sistema (`system-ui` / monospace), así que no hace falta descargar archivos de fuentes; la web carga al instante y funciona offline.
 - **STT por defecto**: «Voz del navegador» para transcribir ya, sin servidores. En Configuración puedes activar Whisper (endpoint local) para transcripción con whisper.cpp.
-- **Acceso directo desde la página**: al seleccionar Whisper, una tarjeta detecta automáticamente si el servidor está corriendo y ofrece un botón «Copiar comando» (`~/ia/run-whisper.sh`) para arrancarlo en un clic.
+- **Acceso directo desde la página**: al seleccionar Whisper, una tarjeta detecta automáticamente si el servidor está corriendo y ofrece un botón «Copiar comando» (`bash scripts/run-whisper.sh` con la ruta absoluta real) para arrancarlo en un clic.
 - **Accesibilidad**: respeta `prefers-reduced-motion`; los controles son navegables por teclado (Espacio = grabar/parar).
 - **Privacidad**: la configuración se guarda en `localStorage`; nada sale de tu navegador salvo que configures un endpoint remoto.
 

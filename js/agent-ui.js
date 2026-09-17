@@ -10,8 +10,20 @@
 (function () {
   "use strict";
 
-  const CMD = "~/ia/run-agent.sh";
   const TICK = 2500;
+
+  /* Launch command: absolute path of the in-repo script when the page is
+     opened from file:// (interview.html lives at the repo root), so the
+     pasted command works from any terminal. Relative otherwise. */
+  function launchCmd(script) {
+    try {
+      if (location.protocol === "file:") {
+        const dir = decodeURIComponent(location.pathname.replace(/\/[^/]*$/, ""));
+        return "bash " + dir + "/scripts/" + script;
+      }
+    } catch (e) {}
+    return "bash scripts/" + script;
+  }
 
   function T(key) {
     const L = (window.I18N && window.I18N.getLocale ? window.I18N.getLocale() : "es") || "es";
@@ -70,10 +82,11 @@
 
   /* Copy the launch command with a short visual confirmation. */
   function copyCommand() {
+    const CMD = launchCmd("run-agent.sh");
     const btn = document.getElementById("agent-copy");
     const done = function () {
       if (!btn) return;
-      btn.querySelector(".wl-label").textContent = "✓ Copiat";
+      btn.querySelector(".wl-label").textContent = T("s_copied");
       setTimeout(function () { btn.querySelector(".wl-label").textContent = T("s_copy_launch"); }, 1600);
     };
     function fallback() {
@@ -85,6 +98,8 @@
   }
 
   function start() {
+    const code = document.getElementById("agent-cmd");
+    if (code) code.textContent = launchCmd("run-agent.sh");
     update();
     setInterval(update, TICK);
     const sel = document.getElementById("cfg-agent");

@@ -1,0 +1,13 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+*~
+
+# Python artefacts (scripts/piper/server.py)
+__pycache__/
+*.pyc
+
+# Node artefacts from local testing (the app itself has zero dependencies)
+node_modules/
+package.json
+package-lock.json
