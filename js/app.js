@@ -473,6 +473,28 @@
     });
     $("cfg-tts-engine").addEventListener("change", syncTtsEngineUi);
 
+    /* Folder context picker: read local files for interview context */
+    const folderInput = $("cfg-folder");
+    if (folderInput) {
+      folderInput.addEventListener("change", function (e) {
+        const statusEl = $("folder-status");
+        if (!window.FolderContext) return;
+        statusEl.textContent = T("s_folder_loading") || "Cargando…";
+        window.FolderContext.onFolderSelected(e).then(function (stats) {
+          if (stats.count > 0) {
+            statusEl.textContent = T("s_folder_loaded").replace("{count}", stats.count).replace("{size}", window.FolderContext.formatSize(stats.size));
+            toast(T("s_folder_toast_ok").replace("{count}", stats.count));
+          } else {
+            statusEl.textContent = T("s_folder_empty");
+            toast(T("s_folder_toast_empty"));
+          }
+        }).catch(function () {
+          statusEl.textContent = T("s_folder_error");
+          toast(T("s_folder_toast_err"));
+        });
+      });
+    }
+
     /* Topics selector: rebuild the list, wire changes, sync the agent. */
     const list = $("topics-list");
     if (list) {

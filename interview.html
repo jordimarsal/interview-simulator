@@ -199,6 +199,12 @@
         </div>
       </div>
       <div class="field">
+        <label for="cfg-folder" data-i18n="s_folder_label">Carpeta de contexto</label>
+        <input type="file" id="cfg-folder" webkitdirectory directory multiple style="margin-top:0.5rem;" />
+        <small data-i18n="s_folder_hint"></small>
+        <div id="folder-status" style="margin-top:0.4rem;font-size:0.85em;color:#aaa;"></div>
+      </div>
+      <div class="field">
         <label for="cfg-whisper" data-i18n="s_whisper_url">Endpoint Whisper (transcripción)</label>
         <input type="text" id="cfg-whisper" placeholder="http://localhost:8080/v1/audio/transcriptions" />
       </div>
@@ -217,6 +223,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/config.js"></script>
   <script src="js/cv.js"></script>
+  <script src="js/folder-context.js"></script>
   <script src="js/questions.js"></script>
   <script src="js/speech.js"></script>
   <script src="js/orb.js"></script>

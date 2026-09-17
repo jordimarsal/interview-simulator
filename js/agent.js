@@ -104,8 +104,16 @@
     const conv = history.slice(-6).map(function (h) {
       return { role: h.role === "agent" ? "assistant" : "user", content: h.text };
     });
+
+    // Include folder context if available
+    let folderContext = "";
+    if (window.FolderContext && window.FolderContext.hasContent()) {
+      folderContext = "\n\nCONTEXTO ADICIONAL DEL CANDIDATO (proyectos/repositorios):\n" + window.FolderContext.getContent();
+    }
+
     const prompt = sys + "\n\nTEMAS PERMITIDOS (alterna entre temas técnicos y no técnicos, sin repetirlos): " +
       (window.Questions.topicLabels(lang).join(", ") || "libre") +
+      folderContext +
       "\n\nConversación previa:\n" + conv.map(function (c) {
         return (c.role === "assistant" ? "Entrevistador: " : "Candidato: ") + c.content;
       }).join("\n") || "(sin preguntas previas)";

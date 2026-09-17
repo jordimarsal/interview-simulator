@@ -337,6 +337,18 @@
       es: "Empezar siempre con la presentación",
       en: "Always start with the self-intro"
     },
+    s_folder_label: { es: "Carpeta de contexto", en: "Context folder" },
+    s_folder_hint: {
+      es: "Selecciona una carpeta con proyectos/repositorios para generar preguntas basadas en su contenido.",
+      en: "Select a folder with projects/repositories to generate questions based on its content."
+    },
+    s_folder_loading: { es: "Cargando archivos…", en: "Loading files…" },
+    s_folder_loaded: { es: "{count} archivos cargados ({size})", en: "{count} files loaded ({size})" },
+    s_folder_empty: { es: "No se encontraron archivos de texto", en: "No text files found" },
+    s_folder_error: { es: "Error al leer los archivos", en: "Error reading files" },
+    s_folder_toast_ok: { es: "Contenido cargado desde {count} archivos", en: "Content loaded from {count} files" },
+    s_folder_toast_empty: { es: "La carpeta no contiene archivos de texto reconocidos", en: "Folder contains no recognized text files" },
+    s_folder_toast_err: { es: "Error al procesar la carpeta seleccionada", en: "Error processing selected folder" },
     s_tts_test: { es: "Probar voz", en: "Test voice" },
     tts_test_phrase: {
       es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",
