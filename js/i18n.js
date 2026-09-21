@@ -137,6 +137,25 @@
     btn_rerecord: { es: "Volver a grabar", en: "Re-record" },
     btn_end: { es: "Terminar entrevista", en: "End interview" },
     btn_retry: { es: "Nueva entrevista", en: "New interview" },
+    btn_practice: { es: "Modo práctica: haz tus propias preguntas", en: "Practice mode: ask your own questions" },
+    btn_ask: { es: "Preguntar", en: "Ask" },
+    ask_placeholder: {
+      es: "Escribe la pregunta que harás como entrevistador…",
+      en: "Type the question you'll ask as the interviewer…"
+    },
+    prompt_ask_next: {
+      es: "Tu turno de entrevistador: escribe la siguiente pregunta y púlsala para responderla con el micro.",
+      en: "Your turn as interviewer: type the next question, then tap the mic to answer it."
+    },
+    prompt_dictating: {
+      es: "Escuchando tu pregunta… vuelve a pulsar el micro para parar.",
+      en: "Listening to your question… tap the mic again to stop."
+    },
+    practice_on: {
+      es: "Modo práctica activado: tú haces las preguntas y el coach te sigue ayudando.",
+      en: "Practice mode on: you ask the questions and the coach still helps."
+    },
+    practice_off: { es: "Modo práctica desactivado.", en: "Practice mode off." },
 
     prompt_waiting: {
       es: "Pulsa el micrófono cuando estés listo para empezar.",

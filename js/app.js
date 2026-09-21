@@ -18,6 +18,14 @@
   let lastUserLi = null;
   let activeTranscription = null;
   let answers = [];
+  /* Practice mode: the user plays BOTH roles — they type each question and
+     answer it by voice. The agent never asks; the coach works as usual. */
+  let practiceMode = false;
+  /* Question dictation (practice mode): the mic records the interviewer's
+     question into the composer. `dictating` routes the shared RECORDING
+     state — same pill/orb/mic-icon as an answer, different finalize path. */
+  let dictating = false;
+  let dictBase = "", dictTick = "";
 
   /* ---------------- status / prompt ---------------- */
   const STATUS_KEYS = { idle: "status_idle", asking: "status_agent_speaking", recording: "status_listening", thinking: "status_thinking", finished: "status_done" };
@@ -125,6 +133,81 @@
   function scrollDown() { setTimeout(function () { $("timeline").scrollTop = $("timeline").scrollHeight; }, 30); }
 
   /* ---------------- flow ---------------- */
+  /* Practice mode helpers: the deck's prompt line swaps for a composer. */
+  function showComposer(on) {
+    $("composer").classList.toggle("hidden", !on);
+    $("deck-prompt").classList.toggle("hidden", on);
+  }
+  function enterAskWait() {
+    state = S.IDLE; setStatus();
+    showComposer(true);
+    setPrompt(T("prompt_ask_next"));
+    $("composer-input").setAttribute("placeholder", T("ask_placeholder"));
+    if (orb) orb.setMode("idle");
+    try { $("composer-input").focus(); } catch (e) {}
+  }
+  /* --- question dictation: mic fills the composer --- */
+  function joinDict(base, tick) {
+    tick = (tick || "").trim();
+    return tick ? (base ? base + " " + tick : tick) : base;
+  }
+  function dictLive(tick) { $("composer-input").value = joinDict(dictBase, tick); }
+  function startQuestionDictation() {
+    if (!window.Speech.canTranscribe()) { toast(T("prompt_ask_next")); return; }
+    dictating = true;
+    dictBase = $("composer-input").value;
+    dictTick = "";
+    state = S.RECORDING; setStatus();
+    setMic(true);
+    if (orb) orb.setMode("listening");
+    $("composer-input").setAttribute("placeholder", T("prompt_dictating"));
+    dictLive("");
+    activeTranscription = window.Speech.transcribe(L(), function (tick) {
+      dictTick = tick || "";
+      dictLive(dictTick);
+    });
+    activeTranscription.start();
+  }
+  function stopQuestionDictation(onDone) {
+    const t = activeTranscription;
+    activeTranscription = null;
+    dictating = false;
+    state = S.IDLE; setStatus();
+    setMic(false);
+    if (orb) orb.setMode("idle");
+    $("composer-input").setAttribute("placeholder", T("ask_placeholder"));
+    const done = function (finalText) {
+      dictTick = finalText || dictTick; // whisper path: no live tick, text arrives here
+      dictLive(dictTick);
+      try { $("composer-input").focus(); } catch (e) {}
+      if (onDone) onDone();
+    };
+    if (t) t.stop().then(done);
+    else done("");
+  }
+  function sendManualQuestion() {
+    if (!practiceMode) return;
+    const send = function () {
+      const val = ($("composer-input").value || "").trim();
+      if (!val) return;
+      $("composer-input").value = "";
+      askManualQuestion(val);
+    };
+    if (state === S.RECORDING && dictating) { stopQuestionDictation(send); return; }
+    send();
+  }
+  /* Same aftermath as poseQuestion, but the question comes from the user:
+     agent card + history + coach. No TTS — the user just typed and read it
+     (the card's replay button still reads it aloud on demand). */
+  function askManualQuestion(q) {
+    state = S.ASKING; setStatus();
+    showComposer(false); setPrompt(T("prompt_asked"));
+    currentQ = q;
+    addAgentCard(q);
+    history.push({ role: "agent", text: q });
+    renderSuggestions(q);
+  }
+
   function poseQuestion() {
     state = S.ASKING; setStatus(); setPrompt(T("prompt_asked"));
     if (orb) orb.setMode("agent");
@@ -298,9 +381,23 @@
     if (ul.children.length) box.appendChild(ul);
   }
 
-  function advance() { if (answers.length >= 6) finishSession(); else poseQuestion(); }
+  function advance() {
+    /* Practice mode never hands the turn to the agent and never auto-finishes:
+       the user drives every question; the verdict only comes from «Terminar». */
+    if (practiceMode) { enterAskWait(); return; }
+    if (answers.length >= 6) finishSession(); else poseQuestion();
+  }
 
   function finishSession() {
+    /* Never leave a capture running into the verdict (question dictation,
+       or an answer still recording when «Terminar» is pressed). */
+    if (activeTranscription) {
+      const t = activeTranscription;
+      activeTranscription = null;
+      dictating = false;
+      setMic(false);
+      try { t.stop().catch(function () {}); } catch (e) {}
+    }
     state = S.FINISHED; setStatus(); setPrompt(T("prompt_finished"));
     if (orb) orb.setMode("done");
     showVerdict();
@@ -396,6 +493,11 @@
   /* ---------------- wiring ---------------- */
   function wire() {
     $("mic-btn").addEventListener("click", onMicTap);
+    $("btn-practice").addEventListener("click", togglePractice);
+    $("composer-send").addEventListener("click", sendManualQuestion);
+    $("composer-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendManualQuestion(); }
+    });
     $("btn-replay").addEventListener("click", function () { if (currentQ) { if (orb) orb.ripple(); window.Speech.tts(currentQ); toast(T("btn_replay") + " ▶"); } });
     $("btn-transcript").addEventListener("click", function () {
       const cards = document.querySelectorAll(".msg--agent [data-act='transcript']");
@@ -530,9 +632,26 @@
     });
   }
   function onMicTap() {
+    if (state === S.RECORDING && dictating) { stopQuestionDictation(null); return; }
+    if (practiceMode && state === S.IDLE) { startQuestionDictation(); return; }
     if (state === S.IDLE) poseQuestion();
     else if (state === S.ASKING) startAnswering();
     else if (state === S.RECORDING) finalizeAnswer(null);
+  }
+
+  /* Practice mode toggle: swap the deck's prompt line for a question
+     composer. Never mid-recording/mid-thinking — it would break the turn. */
+  function togglePractice() {
+    if (state === S.RECORDING || state === S.THINKING) return;
+    practiceMode = !practiceMode;
+    $("btn-practice").setAttribute("aria-pressed", String(practiceMode));
+    toast(T(practiceMode ? "practice_on" : "practice_off"));
+    if (practiceMode) {
+      if (state === S.IDLE) enterAskWait(); else showComposer(true);
+    } else {
+      showComposer(false);
+      if (state === S.IDLE) setPrompt(T("prompt_waiting"));
+    }
   }
 
   /* ---------------- toast ---------------- */
@@ -548,6 +667,12 @@
     if (window.Agent) window.Agent.startSession();
     initOrb(); wire(); setStatus(); setPrompt(T("prompt_waiting"));
     loadSettingsIntoDrawer();
+    /* practice composer: i18n copy (data-i18n only covers innerHTML, so
+       attributes like placeholder/aria-label get wired here) */
+    const practiceBtn = $("btn-practice");
+    practiceBtn.title = T("btn_practice");
+    practiceBtn.setAttribute("aria-label", T("btn_practice"));
+    $("composer-input").setAttribute("placeholder", T("ask_placeholder"));
     // speech errors surface as toasts instead of silent empty strings
     window.Speech.onError = function (msg) { if (msg) toast(msg); };
   }

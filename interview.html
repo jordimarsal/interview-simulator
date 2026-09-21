@@ -25,6 +25,7 @@
       <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></symbol>
       <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.6 5.3 5.9.9-4.3 4.2 1 5.9L12 17.6 6.8 20l1-5.9L3.5 8.7l5.9-.9z"/></symbol>
       <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m6 9 6 6 6-6"/><path d="M4 20h16"/></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M8 16h8"/></symbol>
     </defs>
   </svg>
 
@@ -114,7 +115,14 @@
         <svg viewBox="0 0 24 24"><use href="#i-mic"/></svg>
       </button>
       <p class="deck__prompt" id="deck-prompt" data-i18n="prompt_waiting">Pulsa el micrófono cuando estés listo para empezar.</p>
+      <div class="deck__composer hidden" id="composer">
+        <textarea id="composer-input" rows="1"></textarea>
+        <button type="button" class="btn btn--primary" id="composer-send" data-i18n="btn_ask">Preguntar</button>
+      </div>
       <div class="deck__side">
+        <button type="button" class="mini icon-btn" id="btn-practice" aria-pressed="false" title="Modo práctica" aria-label="Modo práctica">
+          <svg viewBox="0 0 24 24"><use href="#i-keyboard"/></svg>
+        </button>
         <button type="button" class="mini icon-btn" id="btn-replay" title="Reproducir pregunta" aria-label="Reproducir pregunta">
           <svg viewBox="0 0 24 24"><use href="#i-replay"/></svg>
         </button>
