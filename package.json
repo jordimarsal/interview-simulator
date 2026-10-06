@@ -3,7 +3,8 @@
   "private": true,
   "description": "VERBATIM · Voice Interview Simulator — dev harness only; the pages stay dependency-free (file://)",
   "scripts": {
-    "test": "bash scripts/check.sh"
+    "test": "bash scripts/check.sh",
+    "build": "echo 'no build step (static file:// project)'"
   },
   "devDependencies": {
     "jsdom": "^29.1.1"

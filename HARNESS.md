@@ -1,6 +1,6 @@
 # Harness — interview-simulator
 
-Installed with [harness-standard](https://github.com/jordimarsal/harness-standard) (`opencode`, `v0.6.0`).
+Installed with [harness-standard](https://github.com/jordimarsal/harness-standard) (`opencode`, `v0.7.1`).
 
 - **Stack detected:** node
 - **Architecture:** generic template
@@ -13,6 +13,9 @@ Installed with [harness-standard](https://github.com/jordimarsal/harness-standar
 
 1. Edit `docs/architecture.md` and `docs/conventions.md` for this project.
 2. Add features to `harness/feature_list.json`.
+3. Project-specific additions to AGENTS.md (mandatory steps, map rows) go
+   inside the `harness:project` block at the end of the file — preserved
+   verbatim on --update.
 3. Start the leader: `opencode`
 4. Update later: re-run install.sh with `--update` (keeps specs, progress and settings).
 

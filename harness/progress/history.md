@@ -45,3 +45,16 @@ Entry shape — the `retro:` line is the per-feature efficiency record
   is the gate; no build step in this repo). Pre-update copies in
   harness/backup/2026-10-06T181552Z/ (gitignored — content in git history).
 - Verified: harness/init.sh green · Node harness 29/29 · e2e 19/19.
+
+---
+
+## 2026-10-06 — harness v0.7.1: project block (maintenance)
+
+- harness-standard v0.7.0/v0.7.1 add the `harness:project` block: entry-file
+  additions survive --update and are not counted as customizations.
+- Migrated: AGENTS.md restored to template shape (§1 + map pristine); the
+  CONTRACTS.md mandate and project map rows moved INSIDE the project block;
+  package.json gained a no-op `build` script so opencode.json matches the
+  template render byte-for-byte.
+- Result: two consecutive --update runs created zero backups; block content
+  and hybrid workflow preserved.

@@ -7,17 +7,15 @@
 
 ## 1. Before you start (mandatory)
 
-1. Read **`CONTRACTS.md`** — the domain contracts of this project (what it is, module roles, invariants that have already broken once, and how to verify). Nothing in this repo may break them.
-2. Run `harness/init.sh` and verify it finishes without errors. If it fails, **stop** and fix the environment before touching code.
-3. Read `harness/progress/current.md` to understand where the last session left off.
-4. Read `harness/feature_list.json`. ALL features follow **Spec Driven Development** — see §4 of this file.
-5. Read `docs/specs.md` before touching any spec or feature.
+1. Run `harness/init.sh` and verify it finishes without errors. If it fails, **stop** and fix the environment before touching code.
+2. Read `harness/progress/current.md` to understand where the last session left off.
+3. Read `harness/feature_list.json`. ALL features follow **Spec Driven Development** — see §4 of this file.
+4. Read `docs/specs.md` before touching any spec or feature.
 
 ## 2. Repository map
 
 | File / folder               | What it contains                                                           | When to read it                  |
 |-----------------------------|-----------------------------------------------------------------------------|----------------------------------|
-| `CONTRACTS.md`              | Domain contracts: architecture, module roles, invariants, verification commands | Always, at start                 |
 | `harness/feature_list.json`         | Feature list with status (`pending` / `spec_ready` / `in_progress` / `done` / `blocked`) | Always, at start                 |
 | `harness/progress/current.md`       | Current session state                                                       | Always, at start                 |
 | `harness/progress/history.md`       | Append-only log of previous sessions                                        | When you need historical context |
@@ -28,9 +26,8 @@
 | `docs/verification.md`      | How to verify your work works (including requirement traceability)          | Before marking a task as `done`  |
 | `harness/CHECKPOINTS.md`            | Objective criteria for "correct final state"                                | For self-assessment              |
 | `.opencode/agent/`           | Subagent definitions (`leader`, `spec-author`, `implementer`, `reviewer`)   | If you orchestrate work          |
-| `index.html` / `interview.html` | Pages (no build, `file://` first-class)     | When touching UI or loading order |
-| `js/`                       | Application code (IIFE modules, ES5-ish, `window.Module` globals) | To implement                     |
-| `../../apply/`              (outside repo) | Offer dossiers `apply/<empresa>.md` + stage question sets `apply/sets/<empresa>.json` | For the offer-mode feature       |
+| `src/`                      | Application code                                                            | To implement                     |
+| `tests/`                    | Automated tests                                                             | To verify                        |
 | `docs/architecture-options.md` | Architecture pattern catalog (module: architecture-catalog) | When filling design.md Architectural Decisions |
 | `docs/iteration-protocol.md`   | Adaptive iteration + adversarial review protocol (module: iterative-refinement) | During implementer refinement rounds |
 | `docs/log-reader-protocol.md`  | Delegate big-log reading to a cheap read-only subagent + verify evidence (module: log-reader) | When a file under `harness/logs/` is too big to read in session |
@@ -105,3 +102,19 @@ Before finishing:
 
 - Re-read the relevant section of `docs/`.
 - If a tool doesn't behave as expected, **do not invent a workaround**: document the block in `harness/progress/current.md` and stop the session.
+
+<!-- harness:project:start -->
+## 0. Project overrides (this block is preserved verbatim across --update)
+
+**Read `CONTRACTS.md` first — before any work.** It holds the domain contracts of this project: what it is, module roles, invariants that have already broken once, and how to verify. Nothing in this repo may break them.
+
+Map additions beyond the generic map above:
+
+| File / folder | What it contains | When to read it |
+|---|---|---|
+| `CONTRACTS.md` | Domain contracts: architecture, module roles, invariants, verification commands | Always, at start |
+| `index.html` / `interview.html` | Pages (no build, `file://` first-class) | When touching UI or loading order |
+| `js/` | Application code (IIFE modules, ES5-ish, `window.Module` globals) | To implement |
+| `../../apply/` (outside repo) | Offer dossiers `apply/<empresa>.md` + stage question sets `apply/sets/<empresa>.json` | For the offer-mode feature |
+<!-- harness:project:end -->
+

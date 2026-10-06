@@ -5,7 +5,7 @@
     "modules": [],
     "audit_level": "basic",
     "workflow": "hybrid",
-    "harness_version": "v0.6.0",
+    "harness_version": "v0.7.1",
     "architecture": ""
   },
   "features": [

@@ -5,7 +5,7 @@
     "bash": {
       "harness/init.sh": "allow",
       "npm test": "allow",
-      "echo 'no build step (static file:// project)'": "allow"
+      "npm run build": "allow"
     }
   }
 }
