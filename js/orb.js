@@ -19,6 +19,7 @@
 
   function Orb(canvas) {
     if (!canvas) return;
+    const self = this; // draw/loop are plain inner functions: `this` is undefined there
     const ctx = canvas.getContext("2d");
     let W = canvas.width, H = canvas.height;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -110,7 +111,7 @@
       ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
       ctx.fill();
 
-      if (mode === "agent" && t - lastRipple > 2600) { lastRipple = t; this.ripple(); }
+      if (mode === "agent" && t - lastRipple > 2600) { lastRipple = t; self.ripple(); }
     }
 
     function loop(t) { draw(t); requestAnimationFrame(loop); }
