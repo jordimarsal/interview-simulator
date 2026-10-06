@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": {
+    "edit": "allow",
+    "bash": {
+      "harness/init.sh": "allow",
+      "for f in js/*.js; do node --check \"$f\"; done && for f in scripts/*.sh; do bash -n \"$f\"; done": "allow",
+      "echo 'no build step (static file:// project)'": "allow"
+    }
+  }
+}

@@ -1,5 +1,7 @@
 # VERBATIM · Voice Interview Simulator
 
+[![built with harness-standard](https://raw.githubusercontent.com/jordimarsal/harness-standard/main/assets/badge.svg)](https://github.com/jordimarsal/harness-standard)
+
 Simulador de entrevistas por voz en **castellano** e **inglés**. Un entrevistador automático te pregunta, tú respondes hablando y un agente IA valora tus respuestas. Se abre con doble clic en `interview.html`; no requiere servidores ni claves para la demo.
 
 ## Qué es y cómo funciona
