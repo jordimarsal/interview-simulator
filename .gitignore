@@ -10,3 +10,6 @@ __pycache__/
 # Node artefacts from local testing (the app itself has zero dependencies)
 node_modules/
 package-lock.json
+
+# harness collision backups (content lives in git history)
+harness/backup/

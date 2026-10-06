@@ -31,3 +31,17 @@ Entry shape — the `retro:` line is the per-feature efficiency record
 - **Deviations:** hybrid-pragmatic flow agreed with the human — work executed in-session
   by one agent (spec → gate → batches → gate), no implementer subagents.
 - retro: 0 dispatches · 0 stalls · 0 restarts (in-session hybrid flow)
+
+---
+
+## 2026-10-06 — harness upgraded v0.4.1 → v0.6.0 (maintenance)
+
+- `--update --hybrid`: workflow now hybrid (formalized in harness-standard
+  v0.6.0 — the in-session flow used for offer_mode, now with mandatory
+  evidence logs in harness/logs/<feature>/ and archived traceability).
+- Merge-back after update (edits live outside the workflow markers):
+  CONTRACTS.md as mandatory step 1 + repo-map rows re-inserted into AGENTS.md;
+  opencode.json build permission corrected (stack now detects node — npm test
+  is the gate; no build step in this repo). Pre-update copies in
+  harness/backup/2026-10-06T181552Z/ (gitignored — content in git history).
+- Verified: harness/init.sh green · Node harness 29/29 · e2e 19/19.

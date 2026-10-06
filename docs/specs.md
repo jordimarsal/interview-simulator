@@ -64,6 +64,24 @@ No automated tooling may bypass these gates. The reviewer leaves a written appro
 record in the feature directory (e.g., a commit message or comment referencing the
 feature name and gate).
 
+### The hybrid variant
+
+A `--hybrid` install keeps this exact gate structure while changing only who
+executes: one in-session agent plays spec-author, implementer and reviewer
+sequentially, following each agent definition as a script. The compensating
+controls are mandatory, not optional:
+
+- **Evidence logs** — every batch's gate output is saved to
+  `harness/logs/<feature>/batch-<n>.log`; a task is only `[x]` with its log in
+  place.
+- **Objective traceability** — `harness/tools/check-traceability.py` output is
+  saved in the feature directory before requesting the Completion Gate.
+- **Escalation** — features over ~12 tasks, critical-file changes, repeated
+  stalls, or subjective verification all switch back to the full dispatch flow.
+
+The trade-off is stated in the workflow section of the entry file: hybrid
+trades independent-context review for velocity.
+
 ---
 
 ## EARS Notation Reference

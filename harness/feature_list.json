@@ -4,7 +4,8 @@
     "parallel": false,
     "modules": [],
     "audit_level": "basic",
-    "harness_version": "v0.4.1",
+    "workflow": "hybrid",
+    "harness_version": "v0.6.0",
     "architecture": ""
   },
   "features": [

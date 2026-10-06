@@ -51,37 +51,46 @@
 - **Leave the repository clean** before closing the session (see §5).
 - **If you don't know something, look in `docs/`** before inventing it.
 
-## 4. Workflow (SDD — mandatory for all features)
+<!-- harness:workflow:start -->
+## 4. Workflow (SDD — hybrid: one in-session agent, same gates)
+
+Same discipline as the full flow, executed by a single in-session agent. Roles
+become modes you play sequentially; evidence replaces dispatches. The two human
+gates are NOT negotiable — hybrid changes who executes, never who approves.
 
 ```
-pending → [spec-author] → spec_ready → ⏈ HUMAN → in_progress → [implementer → reviewer] → done
+pending → [spec mode] → spec_ready → ⏈ HUMAN → in_progress → [batch mode → verify]×n → ⏈ HUMAN → done
 ```
 
-1. The leader detects the first `pending` feature.
-2. The leader dispatches `spec-author`, who creates `harness/specs/<name>/{requirements,design,tasks}.md` and marks status as `spec_ready`.
-3. **Pause.** The human reads the spec at `harness/specs/<name>/` and approves (or requests changes).
-4. Once approved, the leader changes status to `in_progress` and dispatches `implementer`.
-5. The implementer executes `tasks.md` **one batch at a time**, marking each task `[x]` (see *Batching* below).
-6. The reviewer verifies traceability `R<n>` ↔ test and task completion; approves or rejects.
-7. The human reviewer confirms the Completion Gate (`docs/specs.md`). Only after that explicit human approval does the implementer create `harness/specs/<name>/APPROVAL` (human, date, gate), change status to `done`, and move the summary to `harness/progress/history.md`, adding one retro line under it: `retro: <n> dispatches · <s> stalls · <r> restarts` — count what you received for this feature (a stall is a `Nothing was written` re-dispatch; a restart is being re-dispatched in a fresh session).
+1. **Spec mode.** Write `harness/specs/<name>/{requirements,design,tasks.md}`
+   exactly as `spec-author` would — follow `.opencode/agent/spec-author.md` as
+   a script. Mark the feature `spec_ready` and STOP for the human Spec Gate.
+2. **Batch mode.** After approval, implement one batch at a time (2–4
+   consecutive `T<n>` tasks), following `.opencode/agent/implementer.md`.
+   Never a whole feature in one sitting.
+3. **Evidence rule (the core of hybrid).** After every batch:
+   - run the gates yourself (`harness/init.sh` / TEST_CMD) and save the full
+     output to `harness/logs/<feature>/batch-<n>.log`;
+   - tick tasks `[x]` only with that log in place, referencing it in tasks.md;
+   - verify on disk: files present, no task done without green gates.
+   A claim without a log is not evidence — the rule the leader applies to
+   subagents, applied to yourself.
+4. **Review mode.** Before requesting the Completion Gate: run
+   `python3 harness/tools/check-traceability.py harness/feature_list.json`,
+   save its output to `harness/specs/<name>/review.md`, and walk
+   `.opencode/agent/reviewer.md` as a checklist. Reject your own work if any
+   `R<n>` lacks evidence.
+5. **Escalate to the full dispatch flow when any of these hold:** the feature
+   has more than ~12 tasks; it touches files marked critical in
+   `docs/conventions.md`; a batch stalls twice; or verification is subjective
+   (no mechanical gate covers it). Then act as leader and dispatch a real
+   reviewer subagent — fresh context is the value you are trading away for
+   speed.
 
-### Batching (one dispatch = one batch)
-
-The leader never hands a whole feature to a single implementer dispatch:
-
-- A batch = **2–4 consecutive `T<n>` tasks** forming one coherent unit (a change plus its tests). Use 1 task when a single task is large (migration + repository + tests), 4 only when the tasks are small clones, **never 5+**.
-- The dispatch names the batch, the first file to create and the gates to reach — nothing else. The protocol itself lives in `.opencode/agent/implementer.md` (or `.claude/agents/implementer.md`).
-- After every batch the leader verifies **on disk** before dispatching the next one: tasks marked `[x]`, files really present, and the gates run **by the leader itself**. A subagent's chat claim is not evidence.
-- Empty reply or missing files → the batch stalled: re-dispatch the **same** batch opened with `Nothing was written: <missing paths>. Create <first file> now.` Two stalls in a row → start a fresh subagent session; likewise start a fresh session once one approaches ~70% of its context window (a full context stops working silently).
-
-### Parallelism
-
-When `"parallel": true` in `harness/feature_list.json` project config:
-- Independent tasks (no `depends_on`) can be dispatched to separate implementer subagents simultaneously.
-- Only 1 feature may be `in_progress` at a time.
-
-When `"parallel": false` (default): sequential execution, one task at a time.
-
+Trade-off, stated plainly: hybrid trades independent-context review for
+velocity. The evidence logs and the traceability check are what keep that
+trade honest.
+<!-- harness:workflow:end -->
 ## 5. Session lifecycle (closure)
 
 Before finishing:

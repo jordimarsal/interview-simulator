@@ -1,9 +1,10 @@
 # Harness — interview-simulator
 
-Installed with [harness-standard](https://github.com/jordimarsal/harness-standard) (`opencode`, `v0.4.1`).
+Installed with [harness-standard](https://github.com/jordimarsal/harness-standard) (`opencode`, `v0.6.0`).
 
-- **Stack detected:** generic
+- **Stack detected:** node
 - **Architecture:** generic template
+- **Workflow:** hybrid — one in-session agent; same human gates; evidence logs in harness/logs/ (see the workflow section of AGENTS.md)
 - **Roles:** Leader · Spec Author · Implementer · Reviewer (`.opencode/agent/`)
 - **Gates:** `harness/CHECKPOINTS.md` · `docs/verification.md`
 - **Process:** `docs/specs.md` — Spec-Driven Development with a human approval gate

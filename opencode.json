@@ -4,7 +4,7 @@
     "edit": "allow",
     "bash": {
       "harness/init.sh": "allow",
-      "for f in js/*.js; do node --check \"$f\"; done && for f in scripts/*.sh; do bash -n \"$f\"; done": "allow",
+      "npm test": "allow",
       "echo 'no build step (static file:// project)'": "allow"
     }
   }
