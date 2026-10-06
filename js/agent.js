@@ -111,8 +111,15 @@
       folderContext = "\n\nCONTEXTO ADICIONAL DEL CANDIDATO (proyectos/repositorios):\n" + window.FolderContext.getContent();
     }
 
+    // Offer mode: brief + gaps (+ stage focus) so the interviewer probes them
+    let offerContext = "";
+    if (window.Offers && window.Offers.active() && !window.Offers.isStar()) {
+      offerContext = "\n\n" + window.Offers.contextForPrompt(lang);
+    }
+
     const prompt = sys + "\n\nTEMAS PERMITIDOS (alterna entre temas técnicos y no técnicos, sin repetirlos): " +
       (window.Questions.topicLabels(lang).join(", ") || "libre") +
+      offerContext +
       folderContext +
       "\n\nConversación previa:\n" + conv.map(function (c) {
         return (c.role === "assistant" ? "Entrevistador: " : "Candidato: ") + c.content;
@@ -120,6 +127,25 @@
     const out = await chat({ messages: [{ role: "system", content: sys }, { role: "user", content: prompt }], max_tokens: 120, temperature: 0.9 });
     const clean = strip(out);
     if (!clean) throw new Error("empty question from LLM"); // poseQuestion shows its fallback copy
+    return clean;
+  }
+
+  /* STAR drill, remote: the manager persona + current story + this turn's
+     instruction come as the system prompt (Offers owns the story pointer). */
+  async function starQuestionRemote(history, lang) {
+    const sys = window.Offers.storyForPrompt(lang);
+    const conv = (history || []).slice(-6).map(function (h) {
+      return (h.role === "agent" ? "Entrevistador: " : "Candidato: ") + h.text;
+    }).join("\n");
+    const out = await chat({
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: conv ? "Conversación previa:\n" + conv : "(aún no hay respuestas: abre la historia)" }
+      ],
+      max_tokens: 140, temperature: 0.8
+    });
+    const clean = strip(out);
+    if (!clean) throw new Error("empty STAR question from LLM");
     return clean;
   }
   async function evaluateRemote(question, answer, lang) {
@@ -247,6 +273,21 @@
         const intro = window.Questions.introFirstQuestion && window.Questions.introFirstQuestion();
         if (intro) { Agent._visited.add(intro.id); return lang === "en" ? intro.en : intro.es; }
       }
+      /* STAR drill: client-owned pointer. Remote asks the LLM with the
+         manager persona; builtin answers with canned manager lines grounded
+         in the story label. Drill exhausted or remote down → standard paths. */
+      if (window.Offers && window.Offers.isStar()) {
+        const turn = window.Offers.storyTurn();
+        if (!turn) {
+          const closers = window.Questions.closing();
+          const c = closers[Math.floor(Math.random() * closers.length)];
+          return c ? (lang === "en" ? c.en : c.es) : "";
+        }
+        if (this.mode === "remote") {
+          try { return await starQuestionRemote(history, lang); } catch (e) { /* fall through */ }
+        }
+        return window.Offers.builtinStarQuestion(lang);
+      }
       if (this.mode === "remote") {
         try { return await nextQuestionRemote(history, lang); }
         catch (e) { /* fall through to builtin */ }
@@ -307,11 +348,16 @@
       const conv = (history || []).slice(-4).map(function (h) {
         return (h.role === "agent" ? "P: " : "R: ") + h.text;
       }).join("\n");
+      /* Offer mode: gap context so the coach's answers can bridge the offer's
+         weak points. Same system, same % guard, still VERBATIM_CV-grounded. */
+      const offerCtx = (window.Offers && window.Offers.active())
+        ? "\n\n" + window.Offers.contextForPrompt(lang) : "";
       const raw = await chat({
         messages: [
           { role: "system", content: sys },
           { role: "user", content: labels.q + ": " + question +
             (conv ? "\n\n" + labels.ctx + ":\n" + conv : "") +
+            offerCtx +
             "\n\n" + labels.profile + ":\n" + cvText + "\n\n" + labels.remind }
         ],
         response_format: { type: "json_object" }, max_tokens: 500, temperature: 0.5

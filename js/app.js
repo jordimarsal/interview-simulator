@@ -42,7 +42,12 @@
     const reel = $("reel"); if (!reel) return;
     const segs = reel.children;
     for (let i = 0; i < segs.length; i++) segs[i].classList.toggle("on", i < answers.length);
-    reel.setAttribute("aria-valuenow", Math.round((answers.length / 6) * 100));
+    reel.setAttribute("aria-valuenow", Math.round((answers.length / sessionGoal()) * 100));
+  }
+
+  /* Session length: 6 answers, or stories × 2 while the STAR drill is on. */
+  function sessionGoal() {
+    return (window.Offers && window.Offers.sessionGoal) ? window.Offers.sessionGoal() : 6;
   }
 
   /* ---------------- orb ---------------- */
@@ -324,6 +329,9 @@
     function done(result) {
       answers.push({ q: currentQ, a: text, result: result });
       updateReel();
+      /* STAR drill: the client owns the story pointer — advance after each
+         answer so the next question matches opening/probe (or next story). */
+      if (window.Offers && window.Offers.isStar()) window.Offers.advanceStarTurn();
       advance();
     }
   }
@@ -385,7 +393,7 @@
     /* Practice mode never hands the turn to the agent and never auto-finishes:
        the user drives every question; the verdict only comes from «Terminar». */
     if (practiceMode) { enterAskWait(); return; }
-    if (answers.length >= 6) finishSession(); else poseQuestion();
+    if (answers.length >= sessionGoal()) finishSession(); else poseQuestion();
   }
 
   function finishSession() {
@@ -477,9 +485,74 @@
     $("cfg-key").value = c.apiKey || "";
     $("cfg-tts-engine").value = c.ttsEngine || "browser";
     $("cfg-piper").value = c.piperUrl || "";
+    populateOfferSelects();
+    $("cfg-star").checked = !!c.starMode;
+    syncTopicsForOffer();
     syncTtsEngineUi();
     window.Config.voices(document.getElementById("cfg-tts"));
     window.Config.mics(document.getElementById("cfg-mic"));
+  }
+
+  /* ---------------- offer mode ---------------- */
+  /* Live drawer path (app.js owns it; config.js wireDrawer is dead code). */
+  function persistOffers() {
+    const offerSel = $("cfg-offer"), stageSel = $("cfg-stage"), starBox = $("cfg-star");
+    window.Config.set({
+      offerId: (offerSel && offerSel.value) || "",
+      stageId: (stageSel && stageSel.value) || "",
+      starMode: !!(starBox && starBox.checked)
+    });
+  }
+  function populateOfferSelects() {
+    const offerSel = $("cfg-offer"), stageSel = $("cfg-stage");
+    if (!offerSel || !stageSel || !window.Offers) return;
+    const locale = L();
+    const a = window.Offers.active();
+    offerSel.innerHTML = "";
+    const none = document.createElement("option");
+    none.value = ""; none.textContent = T("s_offer_none");
+    offerSel.appendChild(none);
+    window.Offers.list().forEach(function (o) {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      const role = o.role ? (o.role[locale] || o.role.es || "") : "";
+      opt.textContent = o.company + (role ? " · " + role : "");
+      offerSel.appendChild(opt);
+    });
+    offerSel.value = a ? a.id : "";
+    stageSel.innerHTML = "";
+    const all = document.createElement("option");
+    all.value = ""; all.textContent = T("s_offer_stage_all");
+    stageSel.appendChild(all);
+    if (a && Array.isArray(a.stages)) {
+      a.stages.forEach(function (s) {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = (s.label && (s.label[locale] || s.label.es)) || s.id;
+        stageSel.appendChild(opt);
+      });
+    }
+    const st = window.Offers.stage();
+    stageSel.value = st ? st.id : "";
+    const status = $("offer-status");
+    if (status) {
+      status.textContent = a
+        ? T("offer_active_status").replace("{name}", a.company).replace("{n}", String(window.Offers.poolForStage().length))
+        : "";
+    }
+  }
+  /* While an offer drives the bank, the topic checkboxes don't apply. */
+  function syncTopicsForOffer() {
+    const list = $("topics-list");
+    const hint = document.querySelector(".topics__hint");
+    if (!list || !window.Offers) return;
+    const a = window.Offers.active();
+    Array.prototype.forEach.call(list.querySelectorAll("input"), function (b) {
+      b.disabled = !!a;
+    });
+    if (hint) hint.textContent = a
+      ? T("offer_active_topics").replace("{name}", a.company)
+      : T("topics_hint");
   }
 
   /* Piper ignores the browser-voice dropdown: hide it while active. */
@@ -518,7 +591,10 @@
           micId: (msel && msel.value) ? msel.value : "",
           ttsEngine: $("cfg-tts-engine").value,
           piperUrl: $("cfg-piper").value.trim(),
-          tts: (vsel && vsel.value) ? vsel.value : ""
+          tts: (vsel && vsel.value) ? vsel.value : "",
+          offerId: ($("cfg-offer") && $("cfg-offer").value) || "",
+          stageId: ($("cfg-stage") && $("cfg-stage").value) || "",
+          starMode: !!($("cfg-star") && $("cfg-star").checked)
         };
         window.Config.set(patch);
         toast(window.Config.i18n("s_saved"));
@@ -597,6 +673,60 @@
       });
     }
 
+    /* Offer mode: selects, STAR toggle and the .json loader (file://-safe,
+       same pattern as the folder picker). Changes apply instantly. */
+    const offerSel = $("cfg-offer");
+    if (offerSel && window.Offers) {
+      offerSel.addEventListener("change", function () {
+        window.Offers.setActive(offerSel.value);
+        persistOffers();
+        const a = window.Offers.active();
+        toast(a ? T("s_offer_loaded").replace("{name}", a.company) : T("s_offer_off"));
+      });
+      $("cfg-stage").addEventListener("change", function () {
+        window.Offers.setStage($("cfg-stage").value);
+        persistOffers();
+      });
+      $("cfg-star").addEventListener("change", function () {
+        const box = $("cfg-star");
+        if (box.checked && !window.Offers.setStar(true)) {
+          box.checked = false;
+          toast(T("s_offer_star_needs_set"));
+          return;
+        }
+        window.Offers.setStar(box.checked);
+        persistOffers();
+        toast(T(box.checked ? "star_on" : "star_off"));
+      });
+      $("cfg-offer-file").addEventListener("change", function (e) {
+        const input = e.target;
+        const f = input.files && input.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          let obj = null;
+          try { obj = JSON.parse(ev.target.result); } catch (err) { obj = null; }
+          if (!obj) { toast(T("s_offer_invalid")); input.value = ""; return; }
+          try {
+            const id = window.Offers.registerSet(obj, f.name);
+            window.Offers.setActive(id);
+            persistOffers();
+            populateOfferSelects();
+            toast(T("s_offer_loaded").replace("{name}", obj.company || id));
+          } catch (err2) {
+            toast(T("s_offer_invalid"));
+            try { console.warn("[offers]", err2.message); } catch (e3) {}
+          }
+          input.value = "";
+        };
+        reader.readAsText(f);
+      });
+      document.addEventListener("offer-changed", function () {
+        populateOfferSelects();
+        syncTopicsForOffer();
+      });
+    }
+
     /* Topics selector: rebuild the list, wire changes, sync the agent. */
     const list = $("topics-list");
     if (list) {
@@ -665,6 +795,9 @@
   let notes;
   function init() {
     if (window.Agent) window.Agent.startSession();
+    /* Offer mode first: registry + persisted offer/stage/star, so the drawer
+       and the session state machine see a coherent state from the start. */
+    if (window.Offers) window.Offers.applyConfig(window.Config.get());
     initOrb(); wire(); setStatus(); setPrompt(T("prompt_waiting"));
     loadSettingsIntoDrawer();
     /* practice composer: i18n copy (data-i18n only covers innerHTML, so

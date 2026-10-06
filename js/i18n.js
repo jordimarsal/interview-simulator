@@ -369,6 +369,40 @@
     s_folder_toast_ok: { es: "Contenido cargado desde {count} archivos", en: "Content loaded from {count} files" },
     s_folder_toast_empty: { es: "La carpeta no contiene archivos de texto reconocidos", en: "Folder contains no recognized text files" },
     s_folder_toast_err: { es: "Error al procesar la carpeta seleccionada", en: "Error processing selected folder" },
+    s_offer_label: { es: "Oferta (modo por empresa)", en: "Offer (per-company mode)" },
+    s_offer_hint: {
+      es: "Elige una empresa y el entrevistador preguntará por los gaps de esa oferta. Se aplica al instante; se guarda con «Guardar».",
+      en: "Pick a company and the interviewer will probe that offer's gaps. Applies instantly; persisted with «Save»."
+    },
+    s_offer_stage: { es: "Stage del proceso", en: "Process stage" },
+    s_offer_stage_all: { es: "Todos los stages", en: "All stages" },
+    s_offer_star: { es: "STAR drill (manager exigente)", en: "STAR drill (demanding manager)" },
+    s_offer_star_hint: {
+      es: "El entrevistador hace de manager: abre cada historia y exige acción concreta y resultado medible.",
+      en: "The interviewer acts as a manager: opens each story and demands concrete action and a measurable result."
+    },
+    s_offer_file: { es: "…o carga un set .json a mano (apply/sets/)", en: "…or load a .json set manually (apply/sets/)" },
+    s_offer_none: { es: "Sin oferta — banco normal", en: "No offer — default bank" },
+    s_offer_loaded: { es: "Oferta activa: {name}", en: "Offer active: {name}" },
+    s_offer_off: { es: "Oferta desactivada: vuelves al banco normal.", en: "Offer off: back to the default bank." },
+    s_offer_invalid: {
+      es: "Set inválido: revisa el JSON (el detalle está en la consola).",
+      en: "Invalid set: check the JSON (details in the console)."
+    },
+    s_offer_star_needs_set: {
+      es: "STAR necesita una oferta activa con historias (§4 del dossier).",
+      en: "STAR needs an active offer with stories (§4 of the dossier)."
+    },
+    offer_active_topics: {
+      es: "Oferta activa: {name}. Sus preguntas sustituyen al banco; desactiva la oferta para volver a los temas.",
+      en: "Offer active: {name}. Its questions replace the bank; switch the offer off to bring topics back."
+    },
+    offer_active_status: {
+      es: "{name} · {n} preguntas cargadas",
+      en: "{name} · {n} questions loaded"
+    },
+    star_on: { es: "STAR drill activado.", en: "STAR drill on." },
+    star_off: { es: "STAR drill desactivado.", en: "STAR drill off." },
     s_tts_test: { es: "Probar voz", en: "Test voice" },
     tts_test_phrase: {
       es: "Hola. Soy tu entrevistador. Así sonaré durante la sesión.",

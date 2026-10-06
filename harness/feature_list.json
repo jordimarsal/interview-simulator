@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "interview-simulator",
+    "parallel": false,
+    "modules": [],
+    "audit_level": "basic",
+    "harness_version": "v0.4.1",
+    "architecture": ""
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "offer_mode",
+      "title": "Offer mode: per-stage question sets, gap probing and STAR drill",
+      "description": "Load apply/<empresa>.md-derived question sets (apply/sets/<empresa>.json -> js/offer-sets.js bundle or user-loaded file) so the interviewer asks about the offer's gaps (Celery, Vue, system design, Django...), with a stage selector and a STAR drill mode where the agent plays a hiring manager demanding action-result-metric per story. Source of the idea: apply/back_market.md §7.",
+      "acceptance": [
+        "An active offer set drives the questions: builtin serves the set's literal questions per stage; remote receives the offer brief + gaps + stage focus in the prompt.",
+        "STAR drill: interviewer persona is a hiring manager iterating the set's stories (situation -> action -> result/metric), offline builtin fallback included.",
+        "No offer active => behavior byte-identical to the current simulator (default bank, default prompts, 6-answer session).",
+        "All new copy is bilingual (i18n keys, es+en); no hardcoded strings; file:// still works with zero servers.",
+        "sets for the 5 active offers generated in ../../apply/sets/ and bundled to js/offer-sets.js by scripts/build-offer-sets.py; invalid sets are rejected visibly, never silently."
+      ],
+      "status": "done"
+    }
+  ]
+}

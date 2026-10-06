@@ -213,6 +213,21 @@
         <div id="folder-status" style="margin-top:0.4rem;font-size:0.85em;color:#aaa;"></div>
       </div>
       <div class="field">
+        <label for="cfg-offer" data-i18n="s_offer_label">Oferta</label>
+        <select id="cfg-offer" style="margin-top:0.5rem;"></select>
+        <small data-i18n="s_offer_stage" style="display:block;margin-top:0.5rem;"></small>
+        <select id="cfg-stage" style="margin-top:0.3rem;"></select>
+        <label class="topic" style="margin-top:0.55rem;">
+          <input type="checkbox" id="cfg-star" />
+          <span data-i18n="s_offer_star"></span>
+        </label>
+        <small data-i18n="s_offer_star_hint"></small>
+        <input type="file" id="cfg-offer-file" accept=".json,application/json" style="margin-top:0.5rem;" />
+        <small data-i18n="s_offer_file"></small>
+        <small data-i18n="s_offer_hint" style="display:block;margin-top:0.3rem;"></small>
+        <div id="offer-status" style="margin-top:0.4rem;font-size:0.85em;color:#aaa;"></div>
+      </div>
+      <div class="field">
         <label for="cfg-whisper" data-i18n="s_whisper_url">Endpoint Whisper (transcripción)</label>
         <input type="text" id="cfg-whisper" placeholder="http://localhost:8080/v1/audio/transcriptions" />
       </div>
@@ -232,7 +247,9 @@
   <script src="js/config.js"></script>
   <script src="js/cv.js"></script>
   <script src="js/folder-context.js"></script>
+  <script src="js/offer-sets.js"></script>
   <script src="js/questions.js"></script>
+  <script src="js/offers.js"></script>
   <script src="js/speech.js"></script>
   <script src="js/orb.js"></script>
   <script src="js/agent.js"></script>

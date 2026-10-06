@@ -19,7 +19,10 @@
     agent: "builtin",        // 'builtin' | 'remote'
     whisperUrl: "http://localhost:8081/inference",
     llmUrl: "http://localhost:8080/v1/chat/completions",
-    apiKey: ""
+    apiKey: "",
+    offerId: "",     // active offer set id (Offers); "" => default bank
+    stageId: "",     // stage within the active set; "" => all stages
+    starMode: false  // STAR drill (requires the active set to have stories)
   };
 
   function load() {
