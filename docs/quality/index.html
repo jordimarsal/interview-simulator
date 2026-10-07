@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>interview-simulator — quality</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; padding: 2rem;
+    background: #05070a; color: #e6edf3;
+    font: 14px/1.6 ui-monospace, "JetBrains Mono", Menlo, monospace;
+    max-width: 880px; margin-inline: auto;
+  }
+  h1 { font-size: 1rem; letter-spacing: .2em; text-transform: uppercase; color: #8b98ab; }
+  h2 { font-size: .8rem; letter-spacing: .15em; text-transform: uppercase; color: #8b98ab; margin: 2rem 0 .75rem; }
+  .gate { display: inline-block; padding: .5rem .9rem; border: 1px solid #3ddc97; border-radius: 8px; background: #0a0e14; }
+  .gate b { color: #3ddc97; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .75rem; }
+  .card { display: grid; gap: .2rem; padding: .9rem; border: 1px solid #1c2530; border-radius: 8px; background: #0a0e14; }
+  .value { font-size: 1.4rem; color: #3ddc97; }
+  .label { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: #8b98ab; }
+  a { color: #3ddc97; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a.back { display: inline-block; margin-top: 2rem; padding: .5rem .9rem; border: 1px solid #1c2530; border-radius: 8px; background: #0a0e14; }
+  pre { background: #0a0e14; border: 1px solid #1c2530; border-radius: 8px; padding: .9rem; overflow-x: auto; }
+  code { color: #8b98ab; }
+  small { color: #4d5a6d; }
+</style>
+</head>
+<body>
+  <h1>interview-simulator — quality</h1>
+  <p class="gate">quality gate <b>Viatgecio Way</b> · passing</p>
+
+  <h2>Overall (SonarQube)</h2>
+  <div class="grid">
+      <div class="card"><span class="value">35</span><span class="label">issues</span></div>
+      <div class="card"><span class="value">0</span><span class="label">security hotspots</span></div>
+      <div class="card"><span class="value">1350</span><span class="label">lines of code</span></div>
+      <div class="card"><span class="value">29</span><span class="label">files</span></div>
+  </div>
+
+  <h2>Ratings</h2>
+  <div class="grid">
+      <div class="card"><span class="value">E</span><span class="label">reliability</span></div>
+      <div class="card"><span class="value">B</span><span class="label">security</span></div>
+      <div class="card"><span class="value">A</span><span class="label">maintainability</span></div>
+  </div>
+
+  <h2>Why there is no coverage number</h2>
+  <p>This is a dependency-free <code>file://</code> static app: its verification
+  gates are <code>npm test</code> (JS syntax via <code>node --check</code>, shell
+  syntax, and JSON validation of the offer sets) plus ShellCheck on every script,
+  wired into CI. There is no unit-test suite to measure coverage against, so no
+  coverage number is published — the alternative would be a metric pretending
+  those gates do not exist.</p>
+
+  <h2>Raw data</h2>
+  <p>The full scan report is published as <a href="interview-report.json">interview-report.json</a>.</p>
+  <pre>~/homelab/sonarqube/analyze.sh -r interview-report.json interview-simulator
+python3 scripts/sonar-quality.py</pre>
+
+  <a class="back" href="https://github.com/jordimarsal/interview-simulator/blob/main/README.md">README</a>
+  <p><small>Rendered from the scan of 2026-10-07T08:17:43+00:00 by the internal SonarQube
+  (LAN-only dashboard). Page, badges and JSON are regenerated after each scan.</small></p>
+</body>
+</html>

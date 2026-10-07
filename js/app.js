@@ -608,7 +608,7 @@
     /* Hot-plug: keep the mic list fresh while the drawer is open. */
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
       navigator.mediaDevices.addEventListener("devicechange", function () {
-        if ($("settings-drawer").classList.contains("open")) {
+        if ($("settings-drawer").open) {
           window.Config.mics(document.getElementById("cfg-mic"));
         }
       });

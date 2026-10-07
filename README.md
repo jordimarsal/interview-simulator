@@ -1,8 +1,23 @@
 # VERBATIM · Voice Interview Simulator
 
 [![built with harness-standard](https://raw.githubusercontent.com/jordimarsal/harness-standard/main/assets/badge.svg)](https://github.com/jordimarsal/harness-standard)
+[![Quality Gate](docs/images/badge-quality-gate.svg)](https://jordimarsal.github.io/interview-simulator/)
+[![Code Smells](docs/images/badge-code-smells.svg)](https://jordimarsal.github.io/interview-simulator/)
 
 Simulador de entrevistas por voz en **castellano** e **inglés**. Un entrevistador automático te pregunta, tú respondes hablando y un agente IA valora tus respuestas. Se abre con doble clic en `interview.html`; no requiere servidores ni claves para la demo.
+
+## Quality
+
+Analyzed with SonarQube behind a custom quality gate ("Viatgecio Way") — current
+metrics and the raw `interview-report.json` live on the
+[quality page](https://jordimarsal.github.io/interview-simulator/), published on
+GitHub Pages. The badges above are static SVGs rendered from the latest scan
+report; the Sonar server itself is LAN-only, so dynamic badges would not resolve
+outside the homelab. After each scan, refresh the published assets with:
+
+```bash
+python3 scripts/sonar-quality.py   # reads ../interview-report.json, renders page + badges
+```
 
 ## Qué es y cómo funciona
 

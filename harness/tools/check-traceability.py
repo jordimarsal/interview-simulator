@@ -36,7 +36,35 @@ def find_requirements(root: Path, feature: str) -> set[str]:
     return {f"R{m}" for m in REQ_RE.findall(req_file.read_text(encoding="utf-8"))}
 
 
-ATTR_RE = re.compile(r"(?im)^\s*feature\s*:\s*([A-Za-z0-9_-]+)\s*$")
+ATTR_RE = re.compile(r"(?im)^\s*feature\s*:\s*([a-z0-9_-]+)\s*$")
+
+
+def _merge_impl_table(
+    text: str,
+    impl_name: str,
+    feature: str | None,
+    merged: dict[str, list[str]],
+    statuses: dict[str, str],
+) -> None:
+    """Fold one impl_*.md file's rows into the merged tables (protocol v1.1)."""
+    owner = ATTR_RE.search(text)
+    if owner is None:
+        if feature is not None:
+            statuses.setdefault("__unattributed__", impl_name)
+        return
+    if feature is not None and owner.group(1) != feature:
+        return
+    for line in text.splitlines():
+        m = ROW_RE.match(line)
+        if m is None:
+            continue
+        req = m.group(1)
+        tests = [t for t in re.split(r"[,\s]+", m.group(2).strip()) if t]
+        statuses.setdefault(req, m.group(4).strip())
+        merged.setdefault(req, [])
+        for t in tests:
+            if t not in merged[req]:
+                merged[req].append(t)
 
 
 def collect_tables(
@@ -49,52 +77,40 @@ def collect_tables(
     if not progress.is_dir():
         return merged, statuses
     for impl in sorted(progress.glob("impl_*.md")):
-        text = impl.read_text(encoding="utf-8")
-        owner = ATTR_RE.search(text)
-        if owner is None:
-            if feature is not None:
-                statuses.setdefault("__unattributed__", impl.name)
-            continue
-        if feature is not None and owner.group(1) != feature:
-            continue
-        for line in text.splitlines():
-            m = ROW_RE.match(line)
-            if m is None:
-                continue
-            req = m.group(1)
-            tests = [t for t in re.split(r"[,\s]+", m.group(2).strip()) if t]
-            statuses.setdefault(req, m.group(4).strip())
-            merged.setdefault(req, [])
-            for t in tests:
-                if t not in merged[req]:
-                    merged[req].append(t)
+        _merge_impl_table(
+            impl.read_text(encoding="utf-8"), impl.name, feature, merged, statuses
+        )
     return merged, statuses
 
 
-def test_identifier_exists(root: Path, identifier: str) -> bool:
+def _node_id_exists(root: Path, identifier: str) -> bool:
+    """Exact node id `path/to/test_file.py::test_name` — verify both halves."""
+    import ast
+
+    rel, _, name = identifier.rpartition("::")
+    tf = root / rel
+    if not tf.is_file():
+        return False
+    try:
+        tree = ast.parse(tf.read_text(encoding="utf-8", errors="replace"))
+    except SyntaxError:
+        return False
+    return any(
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        and node.name == name
+        for node in ast.walk(tree)
+    )
+
+
+def _search_tests_dir(root: Path, identifier: str) -> bool:
+    """File-name stem or any test function/class named `identifier` under tests/."""
     import ast
 
     tests_dir = root / "tests"
     if not tests_dir.is_dir():
         return False
-    ident = identifier.strip()
-    if "::" in ident:
-        # Exact node id `path/to/test_file.py::test_name` — verify both halves.
-        rel, _, name = ident.rpartition("::")
-        tf = root / rel
-        if not tf.is_file():
-            return False
-        try:
-            tree = ast.parse(tf.read_text(encoding="utf-8", errors="replace"))
-        except SyntaxError:
-            return False
-        return any(
-            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-            and node.name == name
-            for node in ast.walk(tree)
-        )
     for tf in tests_dir.rglob("*.py"):
-        if tf.stem == ident:
+        if tf.stem == identifier:
             return True
         try:
             tree = ast.parse(tf.read_text(encoding="utf-8", errors="replace"))
@@ -103,10 +119,17 @@ def test_identifier_exists(root: Path, identifier: str) -> bool:
         for node in ast.walk(tree):
             if (
                 isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
-                and node.name == ident
+                and node.name == identifier
             ):
                 return True
     return False
+
+
+def test_identifier_exists(root: Path, identifier: str) -> bool:
+    ident = identifier.strip()
+    if "::" in ident:
+        return _node_id_exists(root, ident)
+    return _search_tests_dir(root, ident)
 
 
 def check_feature(root: Path, feature: str) -> dict:
@@ -149,6 +172,48 @@ def check_feature(root: Path, feature: str) -> dict:
     }
 
 
+class UsageError(Exception):
+    """Raised for malformed CLI usage; main prints it and exits 2."""
+
+
+KNOWN_FLAGS = ("--json", "--all", "--feature", "--root")
+
+
+def _take_value(flag: str, remaining: list[str]) -> str | None:
+    """Remove `flag` and its (required) value from remaining; None if absent."""
+    if flag not in remaining:
+        return None
+    i = remaining.index(flag)
+    if i + 1 >= len(remaining):
+        raise UsageError(f"{flag} requires a value")
+    value = remaining[i + 1]
+    del remaining[i : i + 2]
+    return value
+
+
+def parse_args(argv: list[str]) -> "tuple[bool, bool, str | None, Path] | int":
+    """Parse CLI flags; return (as_json, all_features, feature, root) or exit code 2."""
+    try:
+        as_json = "--json" in argv
+        all_features = "--all" in argv
+        remaining = list(argv)
+        feature = _take_value("--feature", remaining)
+        root_arg = _take_value("--root", remaining)
+        unknown = [a for a in remaining if a.startswith("-") and a not in KNOWN_FLAGS]
+        if unknown:
+            raise UsageError(f"unknown argument: {unknown[0]}")
+        positional = [a for a in remaining if not a.startswith("-")]
+        root = Path(root_arg or (positional[-1] if positional else Path.cwd()))
+        if not all_features and feature is None:
+            raise UsageError(
+                "usage: check-traceability.py --all | --feature NAME [--json] [root]"
+            )
+    except UsageError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return as_json, all_features, feature, root
+
+
 def _done_features(root: Path) -> set[str]:
     """Names of features whose status in feature_list.json is `done`."""
     flist = root / "harness" / "feature_list.json"
@@ -165,56 +230,24 @@ def _done_features(root: Path) -> set[str]:
     }
 
 
-def main(argv: list[str]) -> int:
-    as_json = False
-    feature: str | None = None
-    all_features = False
-    root = Path.cwd()
-    i = 0
-    while i < len(argv):
-        a = argv[i]
-        if a == "--json":
-            as_json = True
-        elif a == "--all":
-            all_features = True
-        elif a == "--feature":
-            i += 1
-            if i >= len(argv):
-                print("error: --feature requires a name", file=sys.stderr)
-                return 2
-            feature = argv[i]
-        elif a == "--root":
-            i += 1
-            if i >= len(argv):
-                print("error: --root requires a path", file=sys.stderr)
-                return 2
-            root = Path(argv[i])
-        elif a.startswith("-"):
-            print(f"unknown argument: {a}", file=sys.stderr)
-            return 2
-        else:
-            root = Path(a)
-        i += 1
-    if not all_features and feature is None:
-        print(
-            "usage: check-traceability.py --all | --feature NAME [--json] [root]",
-            file=sys.stderr,
-        )
-        return 2
-
+def _selected_features(root: Path, all_features: bool, feature: str | None) -> list[str]:
+    if not all_features:
+        return [feature]
     specs_dir = root / "harness" / "specs"
-    if all_features:
-        names = (
-            sorted(p.name for p in specs_dir.iterdir() if p.is_dir()) if specs_dir.is_dir() else []
-        )
-        # Only `done` features are gated: a spec_ready/in_progress feature has no
-        # implementation table yet, which is not a traceability gap.
-        done = _done_features(root)
-        names = [n for n in names if n in done]
-    else:
-        names = [feature]
+    names = sorted(p.name for p in specs_dir.iterdir() if p.is_dir()) if specs_dir.is_dir() else []
+    # Only `done` features are gated: a spec_ready/in_progress feature has no
+    # implementation table yet, which is not a traceability gap.
+    done = _done_features(root)
+    return [n for n in names if n in done]
 
-    results = [check_feature(root, n) for n in names]
+
+def main(argv: list[str]) -> int:
+    parsed = parse_args(argv)
+    if isinstance(parsed, int):
+        return parsed
+    as_json, all_features, feature, root = parsed
+
+    results = [check_feature(root, n) for n in _selected_features(root, all_features, feature)]
     verdict = "PASS" if all(r["gaps"] == [] for r in results) else "FAIL"
 
     if as_json:

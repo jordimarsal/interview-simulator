@@ -16,6 +16,7 @@
 # Disk space needed: ~8 GB (plus build tools). Network required.
 # =========================================================================
 set -euo pipefail
+# shellcheck source=scripts/common.sh
 . "$(dirname "$0")/common.sh"
 
 LLAMA_REPO="${LLAMA_REPO:-https://github.com/ggml-org/llama.cpp}"

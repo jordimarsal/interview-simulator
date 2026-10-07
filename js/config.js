@@ -180,10 +180,24 @@
   }
 
   function initDrawer(drawerBtn, drawer, fields) {
-    const open = () => drawer.classList.add("open");
-    const close = () => drawer.classList.remove("open");
+    const open = function () {
+      if (drawer.showModal) {
+        drawer.showModal();
+        requestAnimationFrame(function () { drawer.classList.add("in"); });
+      } else {
+        drawer.classList.add("open", "in");
+      }
+    };
+    const close = function () {
+      drawer.classList.remove("in");
+      if (drawer.close) drawer.close();
+      else drawer.classList.remove("open");
+    };
     drawerBtn.addEventListener("click", open);
-    document.getElementById("drawer-backdrop").addEventListener("click", close);
+    // a click on the ::backdrop area (outside the panel) lands on the dialog itself
+    drawer.addEventListener("click", function (e) {
+      if (e.target === drawer) close();
+    });
     document.getElementById("drawer-close").addEventListener("click", close);
     document.getElementById("cfg-save").addEventListener("click", () => fields.save());
     document.getElementById("cfg-agent").addEventListener("change", function () {

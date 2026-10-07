@@ -12,6 +12,7 @@
 # Idempotent: if the server is already up, it just follows the log.
 # =========================================================================
 set -euo pipefail
+# shellcheck source=scripts/common.sh
 . "$(dirname "$0")/common.sh"
 
 SERVER="${PIPER_SERVER:-$(cd "$(dirname "$0")/piper" && pwd)/server.py}"

@@ -183,13 +183,15 @@ p { color: var(--ink-dim); }
 .lang-switch {
   display: inline-flex; padding: 0.25rem; border-radius: 999px;
   background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+  margin: 0; min-inline-size: 0;
 }
 .lang-switch button {
   padding: 0.35rem 0.7rem; border-radius: 999px; font-size: 0.78rem;
   font-weight: 600; letter-spacing: 0.04em; color: var(--muted);
   transition: all 0.3s var(--ease-out-expo); text-transform: uppercase;
+  border: 0; background: transparent; cursor: pointer;
 }
-.lang-switch button[aria-selected="true"] {
+.lang-switch button[aria-pressed="true"] {
   background: var(--grad-accent); color: #1a1300; box-shadow: 0 4px 16px -4px var(--accent-glow);
 }
 

@@ -1,0 +1,542 @@
+{
+ "generatedAt": "2026-10-07T08:17:43+00:00",
+ "server": "https://sonar.viatgecio.test",
+ "project": {
+  "key": "jordimarsal:interview-simulator",
+  "name": "jordimarsal:interview-simulator",
+  "dashboard": "https://sonar.viatgecio.test/dashboard?id=jordimarsal%3Ainterview-simulator"
+ },
+ "qualityGate": {
+  "name": "Viatgecio Way",
+  "error": null,
+  "status": "OK",
+  "ignoredConditions": false,
+  "period": null,
+  "caycStatus": "non-compliant",
+  "conditions": []
+ },
+ "measures": {
+  "complexity": 146,
+  "duplicated_lines_density": 0.0,
+  "duplicated_lines": 0,
+  "functions": 18,
+  "classes": 1,
+  "statements": 428,
+  "sqale_index": 248,
+  "sqale_rating": 1.0,
+  "bugs": 8,
+  "ncloc": 1350,
+  "coverage": 0.0,
+  "reliability_rating": 5.0,
+  "code_smells": 26,
+  "security_rating": 2.0,
+  "violations": 35,
+  "comment_lines_density": 9.7,
+  "security_hotspots": 0,
+  "comment_lines": 145,
+  "cognitive_complexity": 242,
+  "files": 29,
+  "vulnerabilities": 1
+ },
+ "measuresError": null,
+ "issues": {
+  "total": 35,
+  "returned": 35,
+  "items": [
+   {
+    "rule": "css:S4654",
+    "severity": "BLOCKER",
+    "type": "BUG",
+    "file": "css/interview.css",
+    "line": 14,
+    "message": "Unknown property \"grow\"",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": []
+   },
+   {
+    "rule": "css:S4654",
+    "severity": "BLOCKER",
+    "type": "BUG",
+    "file": "css/interview.css",
+    "line": 128,
+    "message": "Unknown property \"grow\"",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": []
+   },
+   {
+    "rule": "python:S3776",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "harness/tools/check-traceability.py",
+    "line": 42,
+    "message": "Refactor this function to reduce its Cognitive Complexity from 22 to the 15 allowed.",
+    "effort": "12min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "brain-overload"
+    ]
+   },
+   {
+    "rule": "python:S3776",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "harness/tools/check-traceability.py",
+    "line": 74,
+    "message": "Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.",
+    "effort": "8min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "brain-overload"
+    ]
+   },
+   {
+    "rule": "python:S3776",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "harness/tools/check-traceability.py",
+    "line": 168,
+    "message": "Refactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed.",
+    "effort": "19min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "brain-overload"
+    ]
+   },
+   {
+    "rule": "python:S3776",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "harness/tools/validate-feature-list.py",
+    "line": 24,
+    "message": "Refactor this function to reduce its Cognitive Complexity from 90 to the 15 allowed.",
+    "effort": "1h20min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "brain-overload"
+    ]
+   },
+   {
+    "rule": "python:S3776",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "scripts/build-offer-sets.py",
+    "line": 52,
+    "message": "Refactor this function to reduce its Cognitive Complexity from 38 to the 15 allowed.",
+    "effort": "28min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "brain-overload"
+    ]
+   },
+   {
+    "rule": "python:S1192",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "scripts/build-offer-sets.py",
+    "line": 59,
+    "message": "Define a constant instead of duplicating this literal \"missing or empty\" 3 times.",
+    "effort": "6min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "design"
+    ]
+   },
+   {
+    "rule": "python:S1186",
+    "severity": "CRITICAL",
+    "type": "CODE_SMELL",
+    "file": "scripts/piper/server.py",
+    "line": 93,
+    "message": "Add a nested comment explaining why this method is empty, or complete the implementation.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": [
+     "suspicious"
+    ]
+   },
+   {
+    "rule": "python:S5869",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "harness/tools/check-traceability.py",
+    "line": 39,
+    "message": "Remove duplicates in this character class.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "regex"
+    ]
+   },
+   {
+    "rule": "Web:S5255",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "index.html",
+    "line": 22,
+    "message": "Add an \"aria-label\" or \"aria-labbelledby\" attribute to this element.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:S6819",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "index.html",
+    "line": 28,
+    "message": "Use <address> or <details> or <fieldset> or <optgroup> instead of the group role to ensure accessibility across all devices.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S6811",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "index.html",
+    "line": 29,
+    "message": "The attribute aria-selected is not supported by the role button. This role is implicit on the element button.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S6811",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "index.html",
+    "line": 30,
+    "message": "The attribute aria-selected is not supported by the role button. This role is implicit on the element button.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S5255",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "index.html",
+    "line": 138,
+    "message": "Add an \"aria-label\" or \"aria-labbelledby\" attribute to this element.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:S6819",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 43,
+    "message": "Use <progress> instead of the progressbar role to ensure accessibility across all devices.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S6853",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 68,
+    "message": "A form label must be associated with a control and have accessible text.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-10T07:44:00+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S6819",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 76,
+    "message": "Use <img> or <svg> instead of the img role to ensure accessibility across all devices.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:S5255",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 85,
+    "message": "Add an \"aria-label\" or \"aria-labbelledby\" attribute to this element.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T17:50:08+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 119,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-21T13:25:29+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:S6819",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 142,
+    "message": "Use <dialog> instead of the dialog role to ensure accessibility across all devices.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 183,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T17:25:04+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 184,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T17:25:04+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 219,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:S6853",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "interview.html",
+    "line": 220,
+    "message": "A form label must be associated with a control and have accessible text.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "accessibility"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 225,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-10-06T17:35:31+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "Web:InputWithoutLabelCheck",
+    "severity": "MAJOR",
+    "type": "BUG",
+    "file": "interview.html",
+    "line": 237,
+    "message": "Associate a valid label to this input field.",
+    "effort": "5min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "accessibility",
+     "wcag2-a"
+    ]
+   },
+   {
+    "rule": "external_shellcheck:SC2034",
+    "severity": "MAJOR",
+    "type": "CODE_SMELL",
+    "file": "scripts/common.sh",
+    "line": 22,
+    "message": "VERBATIM_LOG_DIR appears unused. Verify use (or export if used externally).",
+    "effort": "0min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": []
+   },
+   {
+    "rule": "css:S1874",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "css/interview.css",
+    "line": 69,
+    "message": "Deprecated keyword \"break-word\" for property \"word-break\"",
+    "effort": "15min",
+    "status": "OPEN",
+    "creationDate": "2026-09-03T16:06:13+0000",
+    "tags": [
+     "cwe",
+     "obsolete"
+    ]
+   },
+   {
+    "rule": "css:S1874",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "css/interview.css",
+    "line": 77,
+    "message": "Deprecated keyword \"break-word\" for property \"word-break\"",
+    "effort": "15min",
+    "status": "OPEN",
+    "creationDate": "2026-09-08T17:51:49+0000",
+    "tags": [
+     "cwe",
+     "obsolete"
+    ]
+   },
+   {
+    "rule": "python:S5332",
+    "severity": "MINOR",
+    "type": "VULNERABILITY",
+    "file": "scripts/piper/server.py",
+    "line": 100,
+    "message": "Using HTTP protocol is insecure. Use HTTPS instead.",
+    "effort": "30min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": [
+     "cwe",
+     "former-hotspot"
+    ]
+   },
+   {
+    "rule": "external_shellcheck:SC1091",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "scripts/run-agent.sh",
+    "line": 16,
+    "message": "Not following: ./common.sh was not specified as input (see shellcheck -x).",
+    "effort": "0min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": []
+   },
+   {
+    "rule": "external_shellcheck:SC1091",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "scripts/run-piper.sh",
+    "line": 15,
+    "message": "Not following: ./common.sh was not specified as input (see shellcheck -x).",
+    "effort": "0min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": []
+   },
+   {
+    "rule": "external_shellcheck:SC1091",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "scripts/run-whisper.sh",
+    "line": 15,
+    "message": "Not following: ./common.sh was not specified as input (see shellcheck -x).",
+    "effort": "0min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": []
+   },
+   {
+    "rule": "external_shellcheck:SC1091",
+    "severity": "MINOR",
+    "type": "CODE_SMELL",
+    "file": "scripts/setup.sh",
+    "line": 19,
+    "message": "Not following: ./common.sh was not specified as input (see shellcheck -x).",
+    "effort": "0min",
+    "status": "OPEN",
+    "creationDate": "2026-09-17T10:05:26+0000",
+    "tags": []
+   }
+  ]
+ },
+ "issuesError": null,
+ "securityHotspots": {
+  "total": 0,
+  "items": []
+ },
+ "securityHotspotsError": null
+}

@@ -432,7 +432,7 @@
       if (STRINGS[key]) el.innerHTML = STRINGS[key][locale];
     });
     document.querySelectorAll(".lang-switch [data-lang]").forEach(function (b) {
-      b.setAttribute("aria-selected", String(b.getAttribute("data-lang") === locale));
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === locale));
     });
   }
 

@@ -40,8 +40,11 @@
         <span class="status-dot"></span>
         <span data-i18n="status_idle">A la espera</span>
       </div>
-      <div class="reel" id="reel" role="progressbar" aria-label="Progreso de la entrevista" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
-        <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+      <div class="reel-wrap">
+        <progress id="reel-progress" class="sr-only" max="100" value="0" aria-label="Progreso de la entrevista"></progress>
+        <div class="reel" id="reel" aria-hidden="true">
+          <span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span>
+        </div>
       </div>
       <div class="topbar__spacer"></div>
       <button type="button" class="icon-btn" id="settings-btn" aria-label="Configuración" title="Configuración">
@@ -65,15 +68,16 @@
           <span class="coach__title" data-i18n="topics_title">Temas</span>
         </div>
         <div class="topics__list" id="topics-list"></div>
-        <label class="topic" id="intro-first-wrap" style="margin-top:0.55rem;">
+        <label class="topic" for="intro-first" id="intro-first-wrap" style="margin-top:0.55rem;">
           <input type="checkbox" id="intro-first" />
-          <span data-i18n="topics_intro_first"></span>
+          <span data-i18n="topics_intro_first">Empezar siempre con la presentación</span>
         </label>
         <small class="topics__hint" data-i18n="topics_hint"></small>
       </aside>
 
       <div class="orb-wrap">
-        <div class="orb-hub" id="orb-hub" data-mode="idle" role="img" aria-label="El entrevistador">
+        <svg class="sr-only" role="img" aria-label="El entrevistador"><desc>Animación del entrevistador</desc></svg>
+        <div class="orb-hub" id="orb-hub" data-mode="idle" aria-hidden="true">
           <canvas id="orb-canvas" width="300" height="300"></canvas>
           <div class="core"></div>
         </div>
@@ -82,7 +86,7 @@
       <ol class="timeline" id="timeline"></ol>
 
       <!-- COACH: sugerencias del agente para cada pregunta -->
-      <aside class="coach" id="coach" aria-live="polite">
+      <aside class="coach" id="coach" aria-live="polite" aria-label="Coach">
         <div class="coach__head">
           <span class="coach__dot" aria-hidden="true"></span>
           <span class="coach__title" data-i18n="coach_title">Coach</span>
@@ -116,7 +120,7 @@
       </button>
       <p class="deck__prompt" id="deck-prompt" data-i18n="prompt_waiting">Pulsa el micrófono cuando estés listo para empezar.</p>
       <div class="deck__composer hidden" id="composer">
-        <textarea id="composer-input" rows="1"></textarea>
+        <textarea id="composer-input" rows="1" aria-label="Escribe tu pregunta"></textarea>
         <button type="button" class="btn btn--primary" id="composer-send" data-i18n="btn_ask">Preguntar</button>
       </div>
       <div class="deck__side">
@@ -136,10 +140,8 @@
     </div>
   </div>
 
-  <!-- SETTINGS DRAWER -->
-  <div class="drawer" id="settings-drawer">
-    <div class="drawer__backdrop" id="drawer-backdrop"></div>
-    <aside class="drawer__panel panel" role="dialog" aria-modal="true" aria-label="Configuración">
+  <!-- SETTINGS DRAWER (native dialog) -->
+  <dialog class="drawer__panel panel" id="settings-drawer" aria-modal="true" aria-label="Configuración">
       <div class="drawer__head">
         <h3 data-i18n="settings_title">Configuración</h3>
         <button type="button" class="icon-btn" id="drawer-close" aria-label="Cerrar"><svg viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
@@ -180,7 +182,9 @@
           <option value="browser">Voz del navegador</option>
           <option value="piper">Piper — neuronal local (scripts/run-piper.sh)</option>
         </select>
+        <label for="cfg-piper">Endpoint Piper (TTS)</label>
         <input type="text" id="cfg-piper" placeholder="http://localhost:8082/tts" style="margin-top:0.5rem;" />
+        <label for="cfg-tts" style="margin-top:0.5rem;">Voz del navegador</label>
         <select id="cfg-tts" class="browser-voice-only" style="margin-top:0.5rem;"></select>
         <button type="button" class="mini" id="cfg-tts-test" data-i18n="s_tts_test">Probar voz</button>
         <small data-i18n="s_tts_piper_hint"></small>
@@ -216,12 +220,14 @@
         <label for="cfg-offer" data-i18n="s_offer_label">Oferta</label>
         <select id="cfg-offer" style="margin-top:0.5rem;"></select>
         <small data-i18n="s_offer_stage" style="display:block;margin-top:0.5rem;"></small>
+        <label for="cfg-stage">Fase de la oferta</label>
         <select id="cfg-stage" style="margin-top:0.3rem;"></select>
-        <label class="topic" style="margin-top:0.55rem;">
+        <label class="topic" for="cfg-star" style="margin-top:0.55rem;">
           <input type="checkbox" id="cfg-star" />
-          <span data-i18n="s_offer_star"></span>
+          <span data-i18n="s_offer_star">STAR drill (manager exigente)</span>
         </label>
         <small data-i18n="s_offer_star_hint"></small>
+        <label for="cfg-offer-file">Archivo de oferta (.json)</label>
         <input type="file" id="cfg-offer-file" accept=".json,application/json" style="margin-top:0.5rem;" />
         <small data-i18n="s_offer_file"></small>
         <small data-i18n="s_offer_hint" style="display:block;margin-top:0.3rem;"></small>
@@ -234,11 +240,11 @@
       <div class="field">
         <label for="cfg-llm" data-i18n="s_llm_url">Agent LLM (chat completions)</label>
         <input type="text" id="cfg-llm" placeholder="http://localhost:8080/v1/chat/completions" />
+        <label for="cfg-key">Clave API (opcional)</label>
         <input type="password" id="cfg-key" placeholder="Clave API (opcional)" style="margin-top:0.5rem;" />
       </div>
       <button type="button" class="btn btn--primary" id="cfg-save" data-i18n="s_save">Guardar</button>
-    </aside>
-  </div>
+  </dialog>
 
   <div class="toasts" id="toasts"></div>
 

@@ -30,6 +30,9 @@ HEADER = (
 errors = []
 
 
+STATUSES_HINT = "missing or empty"
+
+
 def err(fname, path, msg):
     errors.append(f"{fname}: {path}: {msg}")
 
@@ -38,7 +41,7 @@ def is_l10n(obj, fname, path, required=True):
     """A localized value: {"es": str, "en": str}, both non-empty."""
     if obj is None:
         if required:
-            err(fname, path, "missing (expected {es, en})")
+            err(fname, path, f"{STATUSES_HINT} (expected {{es, en}})")
         return
     if not isinstance(obj, dict):
         err(fname, path, "not an object {es, en}")
@@ -46,35 +49,14 @@ def is_l10n(obj, fname, path, required=True):
     for lang in ("es", "en"):
         v = obj.get(lang)
         if not isinstance(v, str) or not v.strip():
-            err(fname, path, f".{lang} missing or empty")
+            err(fname, path, f".{lang} {STATUSES_HINT}")
 
 
-def validate(fname, data):
-    if not isinstance(data, dict):
-        err(fname, "$", "root is not an object")
-        return None
-    for field in ("id", "company"):
-        v = data.get(field)
-        if not isinstance(v, str) or not v.strip():
-            err(fname, f"$.{field}", "missing or empty")
-    set_id = data.get("id") or "?"
-
-    for field in ("role", "brief"):
-        is_l10n(data.get(field), fname, f"$.{field}")
-
-    gaps = data.get("gaps", [])
-    if not isinstance(gaps, list):
-        err(fname, "$.gaps", "not an array")
-    for i, gap in enumerate(gaps):
-        if not isinstance(gap, dict) or not isinstance(gap.get("topic"), str) or not gap["topic"].strip():
-            err(fname, f"$.gaps[{i}]", "needs a non-empty 'topic'")
-        is_l10n(gap.get("probe") if isinstance(gap, dict) else None,
-                fname, f"$.gaps[{i}].probe")
-
+def _validate_stages(data, fname, err):
     stages = data.get("stages")
     if not isinstance(stages, list) or not stages:
         err(fname, "$.stages", "must be an array with at least one stage")
-        stages = []
+        return
     stage_ids = set()
     for i, stage in enumerate(stages):
         p = f"$.stages[{i}]"
@@ -83,7 +65,7 @@ def validate(fname, data):
             continue
         sid = stage.get("id")
         if not isinstance(sid, str) or not sid.strip():
-            err(fname, f"{p}.id", "missing or empty")
+            err(fname, f"{p}.id", f"{STATUSES_HINT}")
         elif sid in stage_ids:
             err(fname, f"{p}.id", f"duplicate stage id '{sid}'")
         else:
@@ -97,19 +79,52 @@ def validate(fname, data):
         for j, q in enumerate(questions):
             is_l10n(q, fname, f"{p}.questions[{j}]")
 
+
+def _validate_stories(data, fname, err):
     stories = data.get("stories", [])
     if not isinstance(stories, list):
         err(fname, "$.stories", "not an array")
+        return
     for i, story in enumerate(stories):
         p = f"$.stories[{i}]"
         if not isinstance(story, dict):
             err(fname, p, "not an object")
             continue
         if not isinstance(story.get("id"), str) or not story["id"].strip():
-            err(fname, f"{p}.id", "missing or empty")
+            err(fname, f"{p}.id", f"{STATUSES_HINT}")
         is_l10n(story.get("label"), fname, f"{p}.label")
         for field in ("situation", "task", "action", "result"):
             is_l10n(story.get(field), fname, f"{p}.{field}")
+
+
+def _validate_gaps(data, fname, err):
+    gaps = data.get("gaps", [])
+    if not isinstance(gaps, list):
+        err(fname, "$.gaps", "not an array")
+        return
+    for i, gap in enumerate(gaps):
+        if not isinstance(gap, dict) or not isinstance(gap.get("topic"), str) or not gap["topic"].strip():
+            err(fname, f"$.gaps[{i}]", "needs a non-empty 'topic'")
+        is_l10n(gap.get("probe") if isinstance(gap, dict) else None,
+                fname, f"$.gaps[{i}].probe")
+
+
+def validate(fname, data):
+    if not isinstance(data, dict):
+        err(fname, "$", "root is not an object")
+        return None
+    for field in ("id", "company"):
+        v = data.get(field)
+        if not isinstance(v, str) or not v.strip():
+            err(fname, f"$.{field}", f"{STATUSES_HINT}")
+    set_id = data.get("id") or "?"
+
+    for field in ("role", "brief"):
+        is_l10n(data.get(field), fname, f"$.{field}")
+
+    _validate_gaps(data, fname, err)
+    _validate_stages(data, fname, err)
+    _validate_stories(data, fname, err)
 
     return set_id
 

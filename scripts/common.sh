@@ -20,6 +20,7 @@ VERBATIM_AI_DIR="${VERBATIM_AI_DIR:-$HOME/.local/share/verbatim}"
 export VERBATIM_AI_DIR
 
 VERBATIM_LOG_DIR="$VERBATIM_AI_DIR/logs"
+export VERBATIM_LOG_DIR
 
 # --- message helpers -----------------------------------------------------
 verbat_info() { printf '[verbatim] %s\n' "$1"; }

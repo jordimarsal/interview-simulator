@@ -12,6 +12,7 @@
 # Idempotent: if the server is already up, it just follows the log.
 # =========================================================================
 set -euo pipefail
+# shellcheck source=scripts/common.sh
 . "$(dirname "$0")/common.sh"
 
 BIN="${WHISPER_SERVER_BIN:-$VERBATIM_AI_DIR/whisper.cpp/build/bin/whisper-server}"

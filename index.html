@@ -15,20 +15,20 @@
   <!-- NAV -->
   <header class="nav" id="nav">
     <div class="container nav__inner row">
-      <a href="#" class="nav__brand">
+      <a href="#" class="nav__brand" aria-label="VERBATIM — inicio">
         <span class="mark" aria-hidden="true"></span>
         <span>VERBATIM</span>
       </a>
-      <nav class="nav__links">
+      <nav class="nav__links" aria-label="Principal">
         <a href="#features" data-i18n="nav_features">Funcionalidad</a>
         <a href="#how" data-i18n="nav_how">Cómo funciona</a>
         <a href="#setup" data-i18n="nav_setup">Configuración</a>
       </nav>
       <div class="nav__cta">
-        <div class="lang-switch" role="group" aria-label="Language">
-          <button type="button" data-lang="es" aria-selected="true">ES</button>
-          <button type="button" data-lang="en" aria-selected="false">EN</button>
-        </div>
+        <fieldset class="lang-switch" aria-label="Language">
+          <button type="button" data-lang="es" aria-pressed="true">ES</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </fieldset>
         <a href="interview.html" class="btn btn--primary" data-i18n="nav_start">Empezar entrevista</a>
       </div>
     </div>
@@ -135,7 +135,7 @@
   <footer>
     <div class="container row">
       <span class="copy" data-i18n="foot_copy">VERBATIM · simulador de entrevistas por voz — hecho para practicar, sin servidores.</span>
-      <nav>
+      <nav aria-label="Pie">
         <a href="#features" data-i18n="nav_features">Funcionalidad</a>
         <a href="#how" data-i18n="nav_how">Cómo funciona</a>
         <a href="interview.html" data-i18n="nav_start2">Empezar</a>
