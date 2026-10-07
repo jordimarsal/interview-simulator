@@ -70,7 +70,7 @@ Layout of the room                                                    */
 .msg--you .msg__meta .who { color: var(--cohort); }
 .msg__card { border-radius: 16px; padding: 1rem 1.1rem; border: 1px solid var(--line); background: var(--bg-2); position: relative; }
 .msg--you .msg__card { background: var(--bg-3); }
-.msg__text { white-space: pre-wrap; word-break: break-word; font-size: 0.96rem; color: var(--ink); min-height: 1.4em; }
+.msg__text { white-space: pre-wrap; overflow-wrap: break-word; font-size: 0.96rem; color: var(--ink); min-height: 1.4em; }
 .msg__text.faint { color: var(--faint); font-style: italic; }
 .msg__actions { display: flex; gap: 0.4rem; margin-top: 0.8rem; flex-wrap: wrap; }
 
@@ -78,7 +78,7 @@ Layout of the room                                                    */
 .review { margin-top: 0.7rem; padding-top: 0.6rem; border-top: 1px dashed var(--line-strong); }
 .review__loading, .review__error { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); }
 .review ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-.rv { position: relative; padding-left: 0.95rem; font-size: 0.82rem; line-height: 1.4; color: var(--ink-dim); word-break: break-word; }
+.rv { position: relative; padding-left: 0.95rem; font-size: 0.82rem; line-height: 1.4; color: var(--ink-dim); overflow-wrap: break-word; }
 .rv::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
 .rv--good { color: var(--ok); }
 .rv--good::before { background: var(--ok); }

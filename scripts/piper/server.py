@@ -98,7 +98,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PIPER_PORT", "8082"))
-    # Loopback-only dev server (bind below); the URL is split so the scan does
-    # not flag a plain-HTTP endpoint in the source.
     print("[piper-tts] listening on localhost:%d/tts" % port)
-    HTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    # Local, loopback-bound dev server spoken to by a file:// frontend: TLS is
+    # not applicable (a self-signed cert would break the browser fetch).
+    HTTPServer(("127.0.0.1", port), Handler).serve_forever()  # NOSONAR — loopback-only dev server
